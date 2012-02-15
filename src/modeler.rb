@@ -2,6 +2,8 @@ include Java
 
 require 'entity.rb'
 require 'entity_dialog.rb'
+require 'endpoint.rb'
+require 'editor_panel.rb'
 
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -34,10 +36,15 @@ class Modeler < JFrame
 
   attr_accessor :drawType, :entities, :connections, :cm, :focus, :entityDialog
 
+  ENTITY_WIDTH = 110
+  ENTITY_HEIGHT = 60
+  ENDPOINT_WIDTH = 16
+  ENDPOINT_HEIGHT = 16
+
   def initialize
     super "HIT Modeler"
 
-    @entities, @connections = Array.new
+    @entities, @connections = []
     @cm = ComponentMover.new
 
     self.initUI
@@ -128,7 +135,8 @@ class Modeler < JFrame
 
 
     #Panel & ScrollPane definition
-    @panel = JPanel.new
+    #@panel = JPanel.new
+    @panel = EditorPanel.new
     @panel.set_layout nil
     @panel.set_background Color.new 255, 255, 255
     @panel.set_preferred_size Dimension.new 2048, 2048
@@ -151,6 +159,18 @@ class Modeler < JFrame
     add_entity "assoc", "associative", nil, 200, 200
     add_entity "kernel", "kernel", nil, 50, 50
     x = add_entity "desc", "descriptive", "aaa", 300, 10
+
+    ep = Endpoint.new
+    ep.set_bounds 400, 400, 16, 16
+    ep.type = "0m"
+    ep.direction = "up"
+    #ep.set_border BorderFactory.create_line_border Color::black
+    @panel.add ep
+    ep.entityParent = x
+    ep.add_mouse_listener SelectEntityAction.new
+    @cm.register_component ep
+
+    puts self.get_content_pane.get_graphics
 
 
     #-----------------------------------------------------------
@@ -187,7 +207,7 @@ class Modeler < JFrame
       end
 
       #TODO width a height budu konstanty
-      entity.set_bounds x, y, 110, 60
+      entity.set_bounds x, y, ENTITY_WIDTH, ENTITY_HEIGHT
       @panel.add entity
 
       entity.add_mouse_listener SelectEntityAction.new
@@ -229,29 +249,49 @@ class SelectEntityAction < MouseAdapter
     #Component which the mouse clicked on
     source = e.source
 
+
+
     clickcount = e.getClickCount
+
+    #TODO following only for testing, remove aftewards !!!
+    if source.class.to_s == "Endpoint"
+      if clickcount == 1
+        #source.reset_direction
+        source.repaint
+        puts "Direction " + source.direction
+        puts "Offset "  + source.offset.to_s
+      end
+      if clickcount == 2
+        source.reset_position
+        source.repaint
+      end
+    end
 
     #Main frame
     parent = (SwingUtilities.getWindowAncestor source)
 
     #Previous focus
     focus = parent.focus
+    focusClass = focus.class.to_s
 
     if parent.drawType == "pointer"
 
       #Deselects previously selected entity
-      if (!focus.nil?)  && (focus.class.to_s == "Entity")
+      if (!focus.nil?)  && (focusClass == "Entity")
         border = BorderFactory.create_line_border Color::black
         parent.focus.set_border border
       end
 
       #Sets focus on currently selected entity
       parent.focus = source
-      border = BorderFactory.create_line_border Color::blue, 2
-      source.set_border border
-
+      if source.class.to_s == "Entity"
+        border = BorderFactory.create_line_border Color::blue, 2
+        source.set_border border
+      end
       #double-click
-      if clickcount == 2
+
+      #TODO consolidate with endpoint click!!!!!
+      if clickcount == 2 && source.class.to_s == "Entity"
 
         #Obtain entity properties dialog
         propertyDialog = parent.entityDialog
@@ -261,7 +301,7 @@ class SelectEntityAction < MouseAdapter
 
         type = source.type
 
-        #Selects respective radio button
+        #Selects radio button based on selected entity
         case type
           when "kernel"
             radio = propertyDialog.get_kernel_radio
@@ -301,7 +341,7 @@ class SelectEntityAction < MouseAdapter
 
       end
 
-      puts parent.focus.name
+      #puts parent.focus.name
 
     end
   end
@@ -315,7 +355,7 @@ class SelectEntityAction < MouseAdapter
 
 end
 
-
+#Deletes selected entity and clears focus
 class DeleteAction < AbstractAction
   def actionPerformed e
 
