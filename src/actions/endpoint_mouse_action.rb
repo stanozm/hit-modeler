@@ -13,6 +13,8 @@ class EndpointMouseAction < MouseAdapter
     source.reset_direction
     source.reset_position
 
+    #source.connection.reset_label_position
+
     parent.panel.repaint
 
 

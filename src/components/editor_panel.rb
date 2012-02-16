@@ -23,7 +23,15 @@ class EditorPanel < JPanel
 
      g.setRenderingHints rh
 
-     @parentFrame.connections.each{ |c| g.draw(c.get_line)}
+     @parentFrame.connections.each do |c|
+       g.set_color c.color
+       g.set_stroke c.stroke
+       g.draw(c.get_line)
+
+     end
+
+     g.set_color Color::black
+     g.set_stroke BasicStroke.new 1
   end
 
 

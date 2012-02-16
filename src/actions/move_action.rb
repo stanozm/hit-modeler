@@ -15,7 +15,10 @@ class MoveAction < ComponentAdapter
 
     if sourceClass == "Entity"
 
-      source.endpoints.each{ |ep| ep.reset_position}
+      source.endpoints.each do |ep|
+        ep.reset_position
+        ep.connection.reset_label_position
+      end
     end
 
     parent.panel.repaint

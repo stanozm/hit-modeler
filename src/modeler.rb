@@ -2,6 +2,7 @@ include Java
 
 require 'components/entity.rb'
 require 'components/entity_dialog.rb'
+require 'components/connection_dialog.rb'
 require 'components/endpoint.rb'
 require 'components/editor_panel.rb'
 require 'components/connection.rb'
@@ -43,12 +44,14 @@ java_import 'ComponentMover'
 puts $CLASSPATH
 class Modeler < JFrame
 
-  attr_accessor :drawType, :entities, :connections, :cm, :focus, :entityDialog, :panel
+  attr_accessor :drawType, :entities, :connections, :cm, :focus, :entityDialog, :connectionDialog, :panel
 
   ENTITY_WIDTH = 110
   ENTITY_HEIGHT = 60
   ENDPOINT_WIDTH = 16
   ENDPOINT_HEIGHT = 16
+
+
 
   def initialize
     super "HIT Modeler"
@@ -175,7 +178,7 @@ class Modeler < JFrame
     add_entity "assoc", "associative", nil, 200, 200
     e1 = add_entity "kernel", "kernel", nil, 50, 50
     e2 = add_entity "desc", "descriptive", "aaa", 300, 10
-    #e2.add_component_listener MoveAction.new
+
     c1 = add_connection e1, e2, (Point2D::Double.new 50+55, 50+30), (Point2D::Double.new 300+55, 10+30), "0m", "0m", "aaa", "dd"
 
 
@@ -194,6 +197,9 @@ class Modeler < JFrame
     #Entity property dialog setup
     @entityDialog = EntityDialog.new self, true
     @entityDialog.set_visible false
+
+    @connectionDialog = ConnectionDialog.new self, true
+    @connectionDialog.set_visible false
 
 
   end
@@ -220,7 +226,7 @@ class Modeler < JFrame
 
       entity.add_mouse_listener SelectAction.new
       entity.add_component_listener MoveAction.new
-      #@entities << entity
+      @entities << entity
       @cm.register_component entity
 
       @panel.repaint
@@ -236,6 +242,7 @@ class Modeler < JFrame
       #ep.direction = direction
       #ep.offset = offset
       ep.set_bounds initX, initY, ENDPOINT_WIDTH, ENDPOINT_HEIGHT
+
       ep.reset_direction
       ep.reset_position
 
@@ -245,6 +252,7 @@ class Modeler < JFrame
       #TODO register additional listeners
       ep.add_component_listener MoveAction.new
       ep.add_mouse_listener EndpointMouseAction.new
+      ep.add_mouse_listener SelectAction.new
 
       @panel.repaint
 
@@ -279,6 +287,17 @@ class Modeler < JFrame
       tEP = add_endpoint tType, target, target_intersecting_point.get_x, target_intersecting_point.get_y
 
       connection = Connection.new sEP, tEP, name, definition
+
+      [sEP,tEP].each {|ep| ep.connection = connection}
+
+      label = JLabel.new name
+      @panel.add label
+      @cm.register_component label
+
+
+      label.set_size label.get_preferred_size
+      connection.label = label
+      connection.reset_label_position
 
       @connections << connection
       connection

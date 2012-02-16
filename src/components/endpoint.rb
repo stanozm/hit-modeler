@@ -35,6 +35,9 @@ class Endpoint < JLabel
 
     g.setRenderingHints rh
 
+    g.set_color connection.color
+    g.set_stroke connection.stroke
+
     paint_endpoint g, @type, @direction
 
   end
@@ -122,19 +125,19 @@ class Endpoint < JLabel
       return @direction
     end
 
-    if myX + 16 > parentX + ENTITY_WIDTH
+    if myX + 16 >= parentX + ENTITY_WIDTH
         @direction = "right"
     end
 
-    if myX  < parentX
+    if myX  <= parentX
         @direction = "left"
     end
 
-    if myY + 16 > parentY + ENTITY_HEIGHT
+    if myY + 16 >= parentY + ENTITY_HEIGHT
        @direction = "down"
     end
 
-    if myY  < parentY
+    if myY  <= parentY
       @direction = "up"
     end
 
