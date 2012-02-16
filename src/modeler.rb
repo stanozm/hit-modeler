@@ -1,9 +1,15 @@
 include Java
 
-require 'entity.rb'
-require 'entity_dialog.rb'
-require 'endpoint.rb'
-require 'editor_panel.rb'
+require 'components/entity.rb'
+require 'components/entity_dialog.rb'
+require 'components/endpoint.rb'
+require 'components/editor_panel.rb'
+require 'components/connection.rb'
+require 'actions/select_action.rb'
+require 'actions/delete_action.rb'
+require 'actions/panel_mouse_action.rb'
+require 'actions/move_action.rb'
+require 'actions/endpoint_mouse_action.rb'
 
 import java.awt.BorderLayout
 import javax.swing.JPanel
@@ -29,12 +35,15 @@ import javax.swing.BorderFactory
 import javax.swing.JLabel
 import javax.swing.AbstractAction
 import javax.swing.KeyStroke
+import java.awt.geom.Line2D
+import java.awt.geom.Point2D
+import java.awt.event.ComponentAdapter
 java_import 'ComponentMover'
 
 puts $CLASSPATH
 class Modeler < JFrame
 
-  attr_accessor :drawType, :entities, :connections, :cm, :focus, :entityDialog
+  attr_accessor :drawType, :entities, :connections, :cm, :focus, :entityDialog, :panel
 
   ENTITY_WIDTH = 110
   ENTITY_HEIGHT = 60
@@ -47,10 +56,14 @@ class Modeler < JFrame
     @entities, @connections = []
     @cm = ComponentMover.new
 
+
     self.initUI
   end
 
   def initUI
+    @connections = []
+    @entities = []
+
 
     #Menu definition
     @menubar = JMenuBar.new
@@ -137,9 +150,11 @@ class Modeler < JFrame
     #Panel & ScrollPane definition
     #@panel = JPanel.new
     @panel = EditorPanel.new
+    @panel.parentFrame = self
+    puts @panel.parentFrame.class.to_s
     @panel.set_layout nil
     @panel.set_background Color.new 255, 255, 255
-    @panel.set_preferred_size Dimension.new 2048, 2048
+    @panel.set_preferred_size Dimension.new 1024, 1024
 
     #Adding delete action to remove components
     stroke = KeyStroke.getKeyStroke(KeyEvent::VK_DELETE)
@@ -156,21 +171,14 @@ class Modeler < JFrame
     #Registering listener for adding new components
     @panel.add_mouse_listener PanelMouseAction.new
 
+
     add_entity "assoc", "associative", nil, 200, 200
-    add_entity "kernel", "kernel", nil, 50, 50
-    x = add_entity "desc", "descriptive", "aaa", 300, 10
+    e1 = add_entity "kernel", "kernel", nil, 50, 50
+    e2 = add_entity "desc", "descriptive", "aaa", 300, 10
+    #e2.add_component_listener MoveAction.new
+    c1 = add_connection e1, e2, (Point2D::Double.new 50+55, 50+30), (Point2D::Double.new 300+55, 10+30), "0m", "0m", "aaa", "dd"
 
-    ep = Endpoint.new
-    ep.set_bounds 400, 400, 16, 16
-    ep.type = "0m"
-    ep.direction = "up"
-    #ep.set_border BorderFactory.create_line_border Color::black
-    @panel.add ep
-    ep.entityParent = x
-    ep.add_mouse_listener SelectEntityAction.new
-    @cm.register_component ep
 
-    puts self.get_content_pane.get_graphics
 
 
     #-----------------------------------------------------------
@@ -210,168 +218,109 @@ class Modeler < JFrame
       entity.set_bounds x, y, ENTITY_WIDTH, ENTITY_HEIGHT
       @panel.add entity
 
-      entity.add_mouse_listener SelectEntityAction.new
+      entity.add_mouse_listener SelectAction.new
+      entity.add_component_listener MoveAction.new
       #@entities << entity
       @cm.register_component entity
 
       @panel.repaint
-
+      #entity.set_opaque true
       entity
     end
 
-end
+    def add_endpoint(type, entity, initX, initY)
+      ep = Endpoint.new
+      ep.type = type
+      ep.entityParent = entity
+      entity.endpoints << ep
+      #ep.direction = direction
+      #ep.offset = offset
+      ep.set_bounds initX, initY, ENDPOINT_WIDTH, ENDPOINT_HEIGHT
+      ep.reset_direction
+      ep.reset_position
 
-#Custom Listeners
-class PanelMouseAction < MouseAdapter
+      @panel.add ep
+      @cm.register_component ep
 
-  def mouseReleased e
+      #TODO register additional listeners
+      ep.add_component_listener MoveAction.new
+      ep.add_mouse_listener EndpointMouseAction.new
 
-    source = e.source
-    x = e.getX
-    y = e.getY
+      @panel.repaint
 
-    parent = (SwingUtilities.getWindowAncestor source)
-    type = parent.drawType
-
-    if ["kernel","associative","descriptive"].include? type
-
-      name = JOptionPane.showInputDialog parent, "Enter name:", "New entity", JOptionPane::PLAIN_MESSAGE, nil, nil, "untitled"
-
-      if  !name.nil? && !name.empty?
-        parent.add_entity name, type, nil, x, y
-      end
-    end
-  end
-end
-
-class SelectEntityAction < MouseAdapter
-  def mouseClicked e
-    #Component which the mouse clicked on
-    source = e.source
-
-
-
-    clickcount = e.getClickCount
-
-    #TODO following only for testing, remove aftewards !!!
-    if source.class.to_s == "Endpoint"
-      if clickcount == 1
-        #source.reset_direction
-        source.repaint
-        puts "Direction " + source.direction
-        puts "Offset "  + source.offset.to_s
-      end
-      if clickcount == 2
-        source.reset_position
-        source.repaint
-      end
+      return ep
     end
 
-    #Main frame
-    parent = (SwingUtilities.getWindowAncestor source)
+    def add_connection(source, target, sourcePoint, targetPoint, sType, tType, name, definition)
+      sourceX = source.get_x
+      sourceY = source.get_y
 
-    #Previous focus
-    focus = parent.focus
-    focusClass = focus.class.to_s
+      targetX = target.get_x
+      targetY = target.get_y
 
-    if parent.drawType == "pointer"
 
-      #Deselects previously selected entity
-      if (!focus.nil?)  && (focusClass == "Entity")
-        border = BorderFactory.create_line_border Color::black
-        parent.focus.set_border border
+      line = Line2D::Double.new  sourcePoint, targetPoint
+
+      source_intersecting_line = get_intersecting_line source, line
+      target_intersecting_line = get_intersecting_line target, line
+
+      source_intersecting_point = get_intersection_point line.get_p1,
+                                                         line.get_p2,
+                                                         source_intersecting_line.get_p1,
+                                                         source_intersecting_line.get_p2
+
+
+      target_intersecting_point = get_intersection_point line.get_p1,
+                                                         line.get_p2,
+                                                         target_intersecting_line.get_p1,
+                                                         target_intersecting_line.get_p2
+
+      sEP = add_endpoint sType, source, source_intersecting_point.get_x, source_intersecting_point.get_y
+      tEP = add_endpoint tType, target, target_intersecting_point.get_x, target_intersecting_point.get_y
+
+      connection = Connection.new sEP, tEP, name, definition
+
+      @connections << connection
+      connection
+    end
+
+    def get_intersecting_line entity, connnectLine
+      entityX = entity.get_x
+      entityY = entity.get_y
+
+      edges = []
+
+      #Top edge
+      edges << (Line2D::Double.new entityX, entityY, entityX + ENTITY_WIDTH, entityY)
+      #Bottom edge
+      edges << (Line2D::Double.new entityX, entityY + ENTITY_HEIGHT, entityX + ENTITY_WIDTH, entityY + ENTITY_HEIGHT)
+      #Left edge
+      edges << (Line2D::Double.new entityX, entityY, entityX, entityY + ENTITY_HEIGHT)
+      #Right edge
+      edges <<  (Line2D::Double.new entityX + ENTITY_WIDTH, entityY, entityX + ENTITY_WIDTH, entityY + ENTITY_HEIGHT)
+
+      edges.each do |e|
+        return e if connnectLine.intersects_line e
       end
-
-      #Sets focus on currently selected entity
-      parent.focus = source
-      if source.class.to_s == "Entity"
-        border = BorderFactory.create_line_border Color::blue, 2
-        source.set_border border
-      end
-      #double-click
-
-      #TODO consolidate with endpoint click!!!!!
-      if clickcount == 2 && source.class.to_s == "Entity"
-
-        #Obtain entity properties dialog
-        propertyDialog = parent.entityDialog
-        propertyDialog.closeAction = "cancel"
-
-        propertyDialog.get_name_field.set_text source.name
-
-        type = source.type
-
-        #Selects radio button based on selected entity
-        case type
-          when "kernel"
-            radio = propertyDialog.get_kernel_radio
-          when "associative"
-            radio = propertyDialog.get_associative_radio
-          when "descriptive"
-            radio = propertyDialog.get_descriptive_radio
-        end
-        propertyDialog.radioGroup.set_selected radio.get_model, true
-
-
-        #Fills definition text area
-        definition = source.definition
-        propertyDialog.get_definition_area.set_text definition
-
-        propertyDialog.set_visible true
-
-        #Processes dialog input if okButton was clicked
-        if propertyDialog.closeAction == "ok"
-          source.name = propertyDialog.get_name_field.get_text
-          source.definition = propertyDialog.get_definition_area.get_text
-          source.set_tool_tip_text definition
-
-          #Obtain selected radio button
-          options = propertyDialog.radioGroup.get_elements
-          selected = (return_selected options).get_text
-
-          #Sets new type
-          if selected == "characteristic"
-            source.type = "descriptive"
-          else
-            source.type = selected
-          end
-          source.repaint
-
-        end
-
-      end
-
-      #puts parent.focus.name
 
     end
-  end
 
-  #Returns selected option from radio button group
-  def return_selected options
-    options.each do |option|
-      return option if option.is_selected
+    def get_intersection_point pointA, pointB, pointC, pointD
+      xA, yA = pointA.get_x, pointA.get_y
+      xB, yB = pointB.get_x, pointB.get_y
+      xC, yC = pointC.get_x, pointC.get_y
+      xD, yD = pointD.get_x, pointD.get_y
+
+      interX = xC + (((((yC-yA)*(xB-xA)) - ((xC-xA)*(yB-yA))) / (((xD-xC)*(yB-yA)) - ((yD-yC)*(xB-xA)))) * (xD-xC))
+      interY = yC + (((((yC-yA)*(xB-xA)) - ((xC-xA)*(yB-yA))) / (((xD-xC)*(yB-yA)) - ((yD-yC)*(xB-xA)))) * (yD-yC))
+
+
+      return Point2D::Double.new interX, interY
+
     end
-  end
 
 end
 
-#Deletes selected entity and clears focus
-class DeleteAction < AbstractAction
-  def actionPerformed e
 
-    source = e.source
-    parent = SwingUtilities.getWindowAncestor source
-    focus = parent.focus
-
-    if !focus.nil?
-      source.remove focus
-      focus = nil
-      source.repaint
-    end
-
-    puts e.source
-    puts "mazem"
-  end
-end
 
 Modeler.new

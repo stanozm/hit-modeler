@@ -7,11 +7,18 @@ import java.awt.RenderingHints
 
 class Entity < JLabel
 
-  attr_accessor :name, :definition, :type
+  attr_accessor :name, :definition, :type, :endpoints
 
   @name = ""
   @definition = ""
   @type = ""
+
+  def initialize
+    super
+
+    @endpoints = []
+
+  end
 
   def paintComponent g
 

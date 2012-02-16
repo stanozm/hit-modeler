@@ -41,8 +41,10 @@ class Endpoint < JLabel
 
   #TODO Later should be reworked into relative positions
   def paint_endpoint g, type, direction
+
     parts = []
     rotationAngle = 0
+
 
     case type
       when "0m"
@@ -120,21 +122,23 @@ class Endpoint < JLabel
       return @direction
     end
 
-    if myX > parentX + ENTITY_WIDTH
+    if myX + 16 > parentX + ENTITY_WIDTH
         @direction = "right"
     end
 
-    if myX + 16 < parentX
+    if myX  < parentX
         @direction = "left"
     end
 
-    if myY > parentY + ENTITY_HEIGHT
+    if myY + 16 > parentY + ENTITY_HEIGHT
        @direction = "down"
     end
 
-    if myY + 16 < parentY
+    if myY  < parentY
       @direction = "up"
     end
+
+
 
     #Now sets offset based on direction. If endpoint is out of bounds, it sets offest to the edge
     case @direction
