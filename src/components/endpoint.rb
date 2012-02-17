@@ -11,9 +11,11 @@ class Endpoint < JLabel
 
   attr_accessor :type,          #  "0m", "1m", "01", "11"
                 :direction,     #  "up", "down", "right", "left"
-                :entityParent,
+                :entity_parent,
                 :connection,
                 :offset
+
+
 
   ENTITY_WIDTH = 110
   ENTITY_HEIGHT = 60
@@ -46,7 +48,7 @@ class Endpoint < JLabel
   def paint_endpoint g, type, direction
 
     parts = []
-    rotationAngle = 0
+    rotation_angle = 0
 
 
     case type
@@ -75,16 +77,16 @@ class Endpoint < JLabel
 
     case direction
       when "left"
-        rotationAngle = 0
+        rotation_angle = 0
       when "up"
-        rotationAngle = Math.to_radians 90
+        rotation_angle = Math.to_radians 90
       when "down"
-        rotationAngle = Math.to_radians -90
+        rotation_angle = Math.to_radians -90
       when "right"
-        rotationAngle = Math.to_radians 180
+        rotation_angle = Math.to_radians 180
     end
 
-    g.rotate rotationAngle, 8, 8
+    g.rotate rotation_angle, 8, 8
     parts.each { |p| g.draw p  }
   end
 
@@ -93,21 +95,21 @@ class Endpoint < JLabel
     x = self.get_x
     y = self.get_y
 
-    anchorX, anchorY = x, y
+    anchor_x, anchor_y = x, y
 
     case @direction
       when "left"
-        anchorY = y+8
+        anchor_y = y+8
       when "up"
-        anchorX = x+8
+        anchor_x = x+8
       when "down"
-        anchorX = x+8
-        anchorY = y+16
+        anchor_x = x+8
+        anchor_y = y+16
       when "right"
-        anchorX = x+16
-        anchorY = y+8
+        anchor_x = x+16
+        anchor_y = y+8
     end
-    return Point2D::Double.new anchorX, anchorY
+    return Point2D::Double.new anchor_x, anchor_y
   end
 
   #Computes and sets own direction based on its parent entity.
@@ -117,27 +119,27 @@ class Endpoint < JLabel
     myY = self.get_y
 
     #if there is no current parent, set default direction to "left"
-    if !@entityParent.nil?
-      parentX = @entityParent.get_x
-      parentY = @entityParent.get_y
+    if !@entity_parent.nil?
+      parent_x = @entity_parent.get_x
+      parent_y = @entity_parent.get_y
     else
       @direction = "left"
       return @direction
     end
 
-    if myX + 16 >= parentX + ENTITY_WIDTH
+    if myX + 16 >= parent_x + ENTITY_WIDTH
         @direction = "right"
     end
 
-    if myX  <= parentX
+    if myX  <= parent_x
         @direction = "left"
     end
 
-    if myY + 16 >= parentY + ENTITY_HEIGHT
+    if myY + 16 >= parent_y + ENTITY_HEIGHT
        @direction = "down"
     end
 
-    if myY  <= parentY
+    if myY  <= parent_y
       @direction = "up"
     end
 
@@ -146,21 +148,21 @@ class Endpoint < JLabel
     #Now sets offset based on direction. If endpoint is out of bounds, it sets offest to the edge
     case @direction
       when "up", "down"
-        if myX +16 > parentX + ENTITY_WIDTH
+        if myX +16 > parent_x + ENTITY_WIDTH
           @offset = ENTITY_WIDTH - 16
-        else if myX < parentX
+        else if myX < parent_x
                @offset = 0
              else
-               @offset = myX - parentX
+               @offset = myX - parent_x
              end
         end
       when "right", "left"
-        if myY + 16 > parentY + ENTITY_HEIGHT
+        if myY + 16 > parent_y + ENTITY_HEIGHT
           @offset = ENTITY_HEIGHT - 16
-        else if myY < parentY
+        else if myY < parent_y
               @offset = 0
              else
-              @offset = myY - parentY
+              @offset = myY - parent_y
              end
         end
     end
@@ -168,18 +170,18 @@ class Endpoint < JLabel
   end
 
   def reset_position
-    parentX = @entityParent.get_x
-    parentY = @entityParent.get_y
+    parent_x = @entity_parent.get_x
+    parent_y = @entity_parent.get_y
 
     case @direction
       when "up"
-        self.set_location parentX + @offset, parentY - 16
+        self.set_location parent_x + @offset, parent_y - 16
       when "down"
-        self.set_location parentX + @offset, parentY + ENTITY_HEIGHT
+        self.set_location parent_x + @offset, parent_y + ENTITY_HEIGHT
       when "left"
-        self.set_location parentX - 16, parentY + @offset
+        self.set_location parent_x - 16, parent_y + @offset
       when "right"
-        self.set_location parentX + ENTITY_WIDTH, parentY + @offset
+        self.set_location parent_x + ENTITY_WIDTH, parent_y + @offset
     end
 
   end

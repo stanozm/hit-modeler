@@ -11,7 +11,7 @@ class SelectAction < MouseAdapter
   SHOW_CONNECTION_DIALOG = true
 
   def initialize
-    @@pressedSource = nil
+    @@pressed_source = nil
 
   end
 
@@ -19,26 +19,26 @@ class SelectAction < MouseAdapter
     #Component which the mouse clicked on
     source = e.source
 
-    clickcount = e.getClickCount
+    click_count = e.getClickCount
 
     #Main frame
     parent = (SwingUtilities.getWindowAncestor source)
 
     #Previous focus
     focus = parent.focus
-    focusClass = focus.class.to_s
+    focus_class = focus.class.to_s
 
-    if parent.drawType == "pointer"
+    if parent.draw_type == "pointer"
 
       #Deselects previously selected entity
-      if (!focus.nil?)  && (focusClass == "Entity")
+      if (!focus.nil?)  && (focus_class == "Entity")
         border = BorderFactory.create_line_border Color::black,1
         parent.focus.set_border border
         parent.panel.repaint
       end
 
       #Deselects previously selescted connectin
-      if (!focus.nil?)  && (focusClass == "Connection")
+      if (!focus.nil?)  && (focus_class == "Connection")
 
         parent.focus.color = Color::black
         parent.focus.stroke = BasicStroke.new 1
@@ -56,52 +56,52 @@ class SelectAction < MouseAdapter
 
       #Sets focus on connection of the currently selected endpoint
       if source.class.to_s == "Endpoint"
-        focusConnection = source.connection
-        focusConnection.color = Color::blue
-        focusConnection.stroke = BasicStroke.new 2
-        focusConnection.label.set_foreground Color::blue
-        parent.focus = focusConnection
+        focus_connection = source.connection
+        focus_connection.color = Color::blue
+        focus_connection.stroke = BasicStroke.new 2
+        focus_connection.label.set_foreground Color::blue
+        parent.focus = focus_connection
       end
 
       parent.panel.repaint
       #double-click
 
       #TODO consolidate with endpoint click!!!!!
-      if clickcount == 2 && source.class.to_s == "Entity"
+      if click_count == 2 && source.class.to_s == "Entity"
 
         #Obtain entity properties dialog
-        propertyDialog = parent.entityDialog
-        propertyDialog.closeAction = "cancel"
+        property_dialog = parent.entity_dialog
+        property_dialog.close_action = "cancel"
 
-        propertyDialog.get_name_field.set_text source.name
+        property_dialog.get_name_field.set_text source.name
 
         type = source.type
 
         #Selects radio button based on selected entity
         case type
           when "kernel"
-            radio = propertyDialog.get_kernel_radio
+            radio = property_dialog.get_kernel_radio
           when "associative"
-            radio = propertyDialog.get_associative_radio
+            radio = property_dialog.get_associative_radio
           when "descriptive"
-            radio = propertyDialog.get_descriptive_radio
+            radio = property_dialog.get_descriptive_radio
         end
-        propertyDialog.radioGroup.set_selected radio.get_model, true
+        property_dialog.radio_group.set_selected radio.get_model, true
 
         #Fills definition text area
         definition = source.definition
-        propertyDialog.get_definition_area.set_text definition
+        property_dialog.get_definition_area.set_text definition
 
-        propertyDialog.set_visible true
+        property_dialog.set_visible true
 
         #Processes dialog input if okButton was clicked
-        if propertyDialog.closeAction == "ok"
-          source.name = propertyDialog.get_name_field.get_text
-          source.definition = propertyDialog.get_definition_area.get_text
+        if property_dialog.close_action == "ok"
+          source.name = property_dialog.get_name_field.get_text
+          source.definition = property_dialog.get_definition_area.get_text
           source.set_tool_tip_text definition
 
           #Obtain selected radio button
-          options = propertyDialog.radioGroup.get_elements
+          options = property_dialog.radio_group.get_elements
           selected = (return_selected options).get_text
 
           #Sets new type
@@ -115,95 +115,95 @@ class SelectAction < MouseAdapter
       end
 
       #Showing connection dialog
-      if clickcount == 2 && source.class.to_s == "Endpoint"
+      if click_count == 2 && source.class.to_s == "Endpoint"
 
         connection = source.connection
 
         #Obtain entity properties dialog
-        propertyDialog = parent.connectionDialog
-        propertyDialog.closeAction = "cancel"
+        property_dialog = parent.connection_dialog
+        property_dialog.close_action = "cancel"
 
-        propertyDialog.get_name_field.set_text connection.name
+        property_dialog.get_name_field.set_text connection.name
 
-        propertyDialog.get_source_label.set_text "["+ connection.sourceEP.entityParent.name + "]"
-        propertyDialog.get_target_label.set_text "["+ connection.targetEP.entityParent.name + "]"
+        property_dialog.get_source_label.set_text "["+ connection.source_ep.entity_parent.name + "]"
+        property_dialog.get_target_label.set_text "["+ connection.target_ep.entity_parent.name + "]"
 
-        sourceType = connection.sourceEP.type
-        puts sourceType
+        source_type = connection.source_ep.type
+        puts source_type
 
-        targetType = connection.targetEP.type
-        puts targetType
+        target_type = connection.target_ep.type
+        puts target_type
 
         #Selects radio button based on source point
-        case sourceType
+        case source_type
           when "0m"
-            radio = propertyDialog.get_zero_to_many_source_radio
+            radio = property_dialog.get_zero_to_many_source_radio
           when "1m"
-            radio = propertyDialog.get_one_to_many_source_radio
+            radio = property_dialog.get_one_to_many_source_radio
           when "01"
-            radio = propertyDialog.get_zero_to_one_source_radio
+            radio = property_dialog.get_zero_to_one_source_radio
           when "11"
-            radio = propertyDialog.get_one_to_one_source_radio
+            radio = property_dialog.get_one_to_one_source_radio
         end
-        propertyDialog.radioGroupSource.set_selected radio.get_model, true
+        property_dialog.radio_group_source.set_selected radio.get_model, true
 
         #Selects radio button based on target point
-        case targetType
+        case target_type
           when "0m"
-            radio = propertyDialog.get_zero_to_many_target_radio
+            radio = property_dialog.get_zero_to_many_target_radio
           when "1m"
-            radio = propertyDialog.get_one_to_many_target_radio
+            radio = property_dialog.get_one_to_many_target_radio
           when "01"
-            radio = propertyDialog.get_zero_to_one_target_radio
+            radio = property_dialog.get_zero_to_one_target_radio
           when "11"
-            radio = propertyDialog.get_one_to_one_target_radio
+            radio = property_dialog.get_one_to_one_target_radio
         end
-        propertyDialog.radioGroupTarget.set_selected radio.get_model, true
+        property_dialog.radio_group_target.set_selected radio.get_model, true
 
 
         #Fills definition text area
         definition = connection.definition
-        propertyDialog.get_definition_area.set_text definition
+        property_dialog.get_definition_area.set_text definition
 
-        propertyDialog.set_visible true
+        property_dialog.set_visible true
 
         #Processes dialog input if okButton was clicked
-        if propertyDialog.closeAction == "ok"
-          connection.name = propertyDialog.get_name_field.get_text
+        if property_dialog.close_action == "ok"
+          connection.name = property_dialog.get_name_field.get_text
           connection.label.set_text connection.name
           connection.label.set_size connection.label.get_preferred_size
 
-          connection.definition = propertyDialog.get_definition_area.get_text
+          connection.definition = property_dialog.get_definition_area.get_text
 
 
           #Obtain selected source radio button
-          options = propertyDialog.radioGroupSource.get_elements
+          options = property_dialog.radio_group_source.get_elements
           selected = (return_selected options).get_text
 
           case selected
             when "0,M"
-              connection.sourceEP.type = "0m"
+              connection.source_ep.type = "0m"
             when "1,M"
-              connection.sourceEP.type = "1m"
+              connection.source_ep.type = "1m"
             when "0,1"
-              connection.sourceEP.type = "01"
+              connection.source_ep.type = "01"
             when "1,1"
-              connection.sourceEP.type = "11"
+              connection.source_ep.type = "11"
           end
 
           #Obtain selected target radio button
-          options = propertyDialog.radioGroupTarget.get_elements
+          options = property_dialog.radio_group_target.get_elements
           selected = (return_selected options).get_text
 
           case selected
             when "0,M"
-              connection.targetEP.type = "0m"
+              connection.target_ep.type = "0m"
             when "1,M"
-              connection.targetEP.type = "1m"
+              connection.target_ep.type = "1m"
             when "0,1"
-              connection.targetEP.type = "01"
+              connection.target_ep.type = "01"
             when "1,1"
-              connection.targetEP.type = "11"
+              connection.target_ep.type = "11"
           end
 
 
@@ -222,9 +222,9 @@ class SelectAction < MouseAdapter
     source = e.source
     parent = (SwingUtilities.getWindowAncestor source)
 
-    if parent.drawType == "connection"  && source.class.to_s == "Entity"
+    if parent.draw_type == "connection"  && source.class.to_s == "Entity"
       puts source.name
-      @@pressedSource = source
+      @@pressed_source = source
       border = BorderFactory.create_line_border Color::green, 2
       source.set_border border
 
@@ -234,91 +234,91 @@ class SelectAction < MouseAdapter
 
   def mouseEntered e
     source = e.source
-    #puts "Pressed" + @@pressedSource.class.to_s
+    #puts "Pressed" + @@pressed_source.class.to_s
     parent = (SwingUtilities.getWindowAncestor source)
 
-    if parent.drawType == "connection" && !@@pressedSource.nil?  && source.class.to_s == "Entity"
-      puts @@pressedSource.name
-      if !source.equal? @@pressedSource && !@@pressedSource.nil?
+    if parent.draw_type == "connection" && !@@pressed_source.nil?  && source.class.to_s == "Entity"
+      puts @@pressed_source.name
+      if !source.equal? @@pressed_source && !@@pressed_source.nil?
 
         border = BorderFactory.create_line_border Color::green, 2
         source.set_border border
-        pressedEntity = @@pressedSource
-        sourcePoint = Point2D::Double.new pressedEntity.get_x + 55, pressedEntity.get_y + 30
-        targetPoint = Point2D::Double.new source.get_x + 55, source.get_y + 30
-        #puts "Before adding " + @@pressedSource.class.to_s
+        pressed_entity = @@pressed_source
+        source_point = Point2D::Double.new pressed_entity.get_x + 55, pressed_entity.get_y + 30
+        target_point = Point2D::Double.new source.get_x + 55, source.get_y + 30
+        #puts "Before adding " + @@pressed_source.class.to_s
 
         if SHOW_CONNECTION_DIALOG
 
-          propertyDialog = parent.connectionDialog
-          propertyDialog.closeAction = "cancel"
+          property_dialog = parent.connection_dialog
+          property_dialog.close_action = "cancel"
 
-          propertyDialog.get_name_field.set_text "untitled"
+          property_dialog.get_name_field.set_text "untitled"
 
-          propertyDialog.get_source_label.set_text "["+ pressedEntity.name + "]"
-          propertyDialog.get_target_label.set_text "["+ source.name + "]"
+          property_dialog.get_source_label.set_text "["+ pressed_entity.name + "]"
+          property_dialog.get_target_label.set_text "["+ source.name + "]"
 
 
 
-          radio = propertyDialog.get_zero_to_many_source_radio
-          propertyDialog.radioGroupSource.set_selected radio.get_model, true
+          radio = property_dialog.get_zero_to_many_source_radio
+          property_dialog.radio_group_source.set_selected radio.get_model, true
 
-          radio = propertyDialog.get_zero_to_many_target_radio
-          propertyDialog.radioGroupTarget.set_selected radio.get_model, true
+          radio = property_dialog.get_zero_to_many_target_radio
+          property_dialog.radio_group_target.set_selected radio.get_model, true
 
 
 
           #Fills definition text area
           definition = "fill later ..."
-          propertyDialog.get_definition_area.set_text definition
+          property_dialog.get_definition_area.set_text definition
 
-          propertyDialog.set_visible true
+          property_dialog.set_visible true
 
-          if propertyDialog.closeAction == "ok"
-            name = propertyDialog.get_name_field.get_text
+          if property_dialog.close_action == "ok"
+            name = property_dialog.get_name_field.get_text
             if name.empty? || name.nil?
               name = "untitled"
             end
-            definition =  propertyDialog.get_definition_area.get_text
+            definition =  property_dialog.get_definition_area.get_text
             if definition.empty? || definition.nil?
               definition = "fill later..."
             end
 
             #Obtain selected source radio button
-            options = propertyDialog.radioGroupSource.get_elements
+            options = property_dialog.radio_group_source.get_elements
             selected = (return_selected options).get_text
 
             case selected
               when "0,M"
-                sourceType = "0m"
+                source_type = "0m"
               when "1,M"
-                sourceType = "1m"
+                source_type = "1m"
               when "0,1"
-                sourceType = "01"
+                source_type = "01"
               when "1,1"
-                sourceType = "11"
+                source_type = "11"
             end
 
             #Obtain selected target radio button
-            options = propertyDialog.radioGroupTarget.get_elements
+            options = property_dialog.radio_group_target.get_elements
             selected = (return_selected options).get_text
 
             case selected
               when "0,M"
-                targetType = "0m"
+                target_type = "0m"
               when "1,M"
-                targetType = "1m"
+                target_type = "1m"
               when "0,1"
-                targetType = "01"
+                target_type = "01"
               when "1,1"
-                targetType = "11"
+                target_type = "11"
             end
 
 
-            parent.add_connection @@pressedSource, source, sourcePoint, targetPoint, sourceType, targetType, name, definition
+            parent.add_connection @@pressed_source, source, source_point, target_point, source_type, target_type, name, definition
           end
         else
-          parent.add_connection @@pressedSource, source, sourcePoint, targetPoint, "0m", "0m", "untitled", "none"
+          parent.add_connection @@pressed_source, source, source_point, target_point, "0m", "0m", "untitled", "none"
         end
 
 
@@ -327,9 +327,9 @@ class SelectAction < MouseAdapter
 
         border = BorderFactory.create_line_border Color::black
         source.set_border border
-        #@@pressedSource.set_border border
-        pressedEntity.set_border border
-        @@pressedSource = nil
+        #@@pressed_source.set_border border
+        pressed_entity.set_border border
+        @@pressed_source = nil
         parent.panel.repaint
       end
     end
@@ -343,15 +343,15 @@ class SelectAction < MouseAdapter
     end
   end
 
-  def enable_buttons radioGroup
-    radioGroup.get_elements.each do |button|
+  def enable_buttons radio_group
+    radio_group.get_elements.each do |button|
       button.set_enabled true
     end
   end
 
-  def disable_buttons radioGroup, leaveEnabled
-    radioGroup.get_elements.each do |button|
-      button.set_enabled false unless button.get_text == leaveEnabled
+  def disable_buttons radio_group, leave_enabled
+    radio_group.get_elements.each do |button|
+      button.set_enabled false unless button.get_text == leave_enabled
     end
   end
 

@@ -7,28 +7,28 @@ import javax.swing.ButtonGroup
 
 class EntityDialog  < EDialog
 
-  attr_accessor :closeAction, :radioGroup
+  attr_accessor :close_action, :radio_group
 
   def initialize parent, modal
     super parent, modal
     self.set_location_relative_to parent
 
-    self.initDialog
+    self.init_dialog
 
   end
 
-  def initDialog
+  def init_dialog
 
-    @radioGroup = ButtonGroup.new
-    [self.get_kernel_radio,self.get_associative_radio,self.get_descriptive_radio].each{ |c| @radioGroup.add c}
+    @radio_group = ButtonGroup.new
+    [self.get_kernel_radio,self.get_associative_radio,self.get_descriptive_radio].each{ |c| @radio_group.add c}
 
     self.get_ok_button.add_action_listener do |e|
-      @closeAction = "ok"
+      @close_action = "ok"
       self.set_visible false
     end
 
     self.get_cancel_button.add_action_listener do |e|
-      @closeAction = "cancel"
+      @close_action = "cancel"
       self.set_visible false
     end
   end

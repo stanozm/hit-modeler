@@ -8,11 +8,11 @@ import java.awt.BasicStroke
 
 class Connection
 
-  attr_accessor :sourceEP, :targetEP, :name, :definition, :color, :stroke, :label
+  attr_accessor :source_ep, :target_ep, :name, :definition, :color, :stroke, :label
 
   def initialize source, target, name, definition
-    @sourceEP = source
-    @targetEP = target
+    @source_ep = source
+    @target_ep = target
     @name  = name
     @definition = definition
 
@@ -23,20 +23,20 @@ class Connection
   end
 
   def get_line
-    sourcePoint = @sourceEP.get_anchor_point
-    targetPoint = @targetEP.get_anchor_point
+    source_point = @source_ep.get_anchor_point
+    target_point = @target_ep.get_anchor_point
 
-    return Line2D::Double.new sourcePoint, targetPoint
+    return Line2D::Double.new source_point, target_point
   end
 
   def reset_label_position
-    sourcePoint = @sourceEP.get_anchor_point
-    targetPoint = @targetEP.get_anchor_point
+    source_point = @source_ep.get_anchor_point
+    target_point = @target_ep.get_anchor_point
 
-    resultX =  (sourcePoint.get_x + targetPoint.get_x) / 2
-    resultY =  ((sourcePoint.get_y + targetPoint.get_y) / 2 ) - 3
+    result_x =  (source_point.get_x + target_point.get_x) / 2
+    result_y =  ((source_point.get_y + target_point.get_y) / 2 ) - 3
 
-    @label.set_location resultX, resultY
+    @label.set_location result_x, result_y
 
   end
 end

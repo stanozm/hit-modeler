@@ -7,7 +7,7 @@ import java.awt.RenderingHints
 
 class Entity < JLabel
 
-  attr_accessor :name, :definition, :type, :endpoints
+  attr_accessor :name, :definition, :type, :endpoints,:id
 
   @name = ""
   @definition = ""

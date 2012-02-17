@@ -7,36 +7,36 @@ import javax.swing.JFrame
 
 class ConnectionDialog < CDialog
 
-  attr_accessor :closeAction, :radioGroupSource, :radioGroupTarget
+  attr_accessor :close_action, :radio_group_source, :radio_group_target
 
   def initialize parent, modal
     super parent, modal
     self.set_location_relative_to parent
 
-    self.initDialog
+    self.init_dialog
 
   end
 
-  def initDialog
-    @radioGroupSource = ButtonGroup.new
+  def init_dialog
+    @radio_group_source = ButtonGroup.new
     [self.get_zero_to_many_source_radio,
      self.get_one_to_many_source_radio,
      self.get_zero_to_one_source_radio,
-     self.get_one_to_one_source_radio].each {|c| @radioGroupSource.add c}
+     self.get_one_to_one_source_radio].each {|c| @radio_group_source.add c}
 
-    @radioGroupTarget = ButtonGroup.new
+    @radio_group_target = ButtonGroup.new
     [self.get_zero_to_many_target_radio,
      self.get_one_to_many_target_radio,
      self.get_zero_to_one_target_radio,
-     self.get_one_to_one_target_radio].each {|c| @radioGroupTarget.add c}
+     self.get_one_to_one_target_radio].each {|c| @radio_group_target.add c}
 
     self.get_ok_button.add_action_listener do |e|
-      @closeAction = "ok"
+      @close_action = "ok"
       self.set_visible false
     end
 
     self.get_cancel_button.add_action_listener do |e|
-      @closeAction = "cancel"
+      @close_action = "cancel"
       self.set_visible false
     end
 

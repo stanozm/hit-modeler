@@ -11,9 +11,9 @@ class MoveAction < ComponentAdapter
     parent = SwingUtilities.getWindowAncestor source
 
 
-    sourceClass = source.class.to_s
+    source_class = source.class.to_s
 
-    if sourceClass == "Entity"
+    if source_class == "Entity"
 
       source.endpoints.each do |ep|
         ep.reset_position

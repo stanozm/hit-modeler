@@ -21,16 +21,16 @@ class DeleteAction < AbstractAction
         marked = []
         endpoints.each{ |ep| marked << ep.connection}
 
-        #marked = connections.select { |c| (endpoints.include? c.sourceEP) || (endpoints.include? c.targetEP) }
+        #marked = connections.select { |c| (endpoints.include? c.source_ep) || (endpoints.include? c.target_ep) }
         marked.each do |c|
-          sourceEP = c.sourceEP
-          targetEP = c.targetEP
+          source_ep = c.source_ep
+          target_ep = c.target_ep
 
-          sourceEP.entityParent.endpoints.delete sourceEP
-          targetEP.entityParent.endpoints.delete targetEP
+          source_ep.entity_parent.endpoints.delete source_ep
+          target_ep.entity_parent.endpoints.delete target_ep
 
-          source.remove sourceEP
-          source.remove targetEP
+          source.remove source_ep
+          source.remove target_ep
 
           source.remove c.label
 
@@ -48,13 +48,13 @@ class DeleteAction < AbstractAction
 
         connection = focus
 
-        sourceEP = connection.sourceEP
-        targetEP = connection.targetEP
+        source_ep = connection.source_ep
+        target_ep = connection.target_ep
 
-        sourceEP.entityParent.endpoints.delete sourceEP
-        targetEP.entityParent.endpoints.delete targetEP
+        source_ep.entity_parent.endpoints.delete source_ep
+        target_ep.entity_parent.endpoints.delete target_ep
 
-        [sourceEP,targetEP].each{ |e| source.remove e}
+        [source_ep,target_ep].each{ |e| source.remove e}
 
         source.remove connection.label
         parent.connections.delete connection

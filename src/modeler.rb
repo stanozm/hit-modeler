@@ -44,7 +44,7 @@ java_import 'ComponentMover'
 puts $CLASSPATH
 class Modeler < JFrame
 
-  attr_accessor :drawType, :entities, :connections, :cm, :focus, :entityDialog, :connectionDialog, :panel
+  attr_accessor :draw_type, :entities, :connections, :cm, :focus, :entity_dialog, :connection_dialog, :panel, :max_id
 
   ENTITY_WIDTH = 110
   ENTITY_HEIGHT = 60
@@ -58,12 +58,12 @@ class Modeler < JFrame
 
     @entities, @connections = []
     @cm = ComponentMover.new
+    @max_id = 0
 
-
-    self.initUI
+    self.init_ui
   end
 
-  def initUI
+  def init_ui
     @connections = []
     @entities = []
 
@@ -71,27 +71,27 @@ class Modeler < JFrame
     #Menu definition
     @menubar = JMenuBar.new
 
-    @fileMenu = JMenu.new "File"
+    @file_menu = JMenu.new "File"
 
-    @itemNew = JMenuItem.new "New"
-    @itemSave = JMenuItem.new "Save"
-    @itemLoad = JMenuItem.new "Load"
-    @itemExit = JMenuItem.new "Exit"
+    @item_new = JMenuItem.new "New"
+    @item_save = JMenuItem.new "Save"
+    @item_load = JMenuItem.new "Load"
+    @item_exit = JMenuItem.new "Exit"
 
-    @itemExit.set_tool_tip_text "Exit application"
-    @itemExit.add_action_listener do |e|
+    @item_exit.set_tool_tip_text "Exit application"
+    @item_exit.add_action_listener do |e|
       System.exit 0
     end
 
 
 
 
-    [@itemNew,
-     @itemSave,
-     @itemLoad,
-     @itemExit].each{ |c| @fileMenu.add c}
+    [@item_new,
+     @item_save,
+     @item_load,
+     @item_exit].each{ |c| @file_menu.add c}
 
-    @menubar.add @fileMenu
+    @menubar.add @file_menu
     self.set_jmenu_bar @menubar
 
     #-----------------------------------------------------------
@@ -100,43 +100,43 @@ class Modeler < JFrame
     @toolbar = JToolBar.new
 
     #Toolbar buttons
-    @pointerButton = JToggleButton.new "pointer"
-    @kernelButton = JToggleButton.new "kernel"
-    @assocButton = JToggleButton.new "associative"
-    @descButton = JToggleButton.new "descriptive"
-    @connectButton = JToggleButton.new "connection"
+    @pointer_button = JToggleButton.new "pointer"
+    @kernel_button = JToggleButton.new "kernel"
+    @assoc_button = JToggleButton.new "associative"
+    @desc_button = JToggleButton.new "descriptive"
+    @connect_button = JToggleButton.new "connection"
 
     #Adding buttons into button group, so that only one is selected at a time
     @group = ButtonGroup.new
-    [@pointerButton,
-     @kernelButton,
-     @assocButton,
-     @descButton,
-     @connectButton].each {|c| @group.add c}
+    [@pointer_button,
+     @kernel_button,
+     @assoc_button,
+     @desc_button,
+     @connect_button].each {|c| @group.add c}
 
     #Default selection
-    @group.set_selected(@pointerButton.get_model,true)
-    @drawType = "pointer"
+    @group.set_selected(@pointer_button.get_model,true)
+    @draw_type = "pointer"
 
     #Adding button into toolbar
     #TODO replace text with icons
-    [@pointerButton,
-     @kernelButton,
-     @assocButton,
-     @descButton,
-     @connectButton].each {|c| @toolbar.add c}
+    [@pointer_button,
+     @kernel_button,
+     @assoc_button,
+     @desc_button,
+     @connect_button].each {|c| @toolbar.add c}
 
-    #Sets drawType after switching button selection
+    #Sets draw_type after switching button selection
     #and enables/disables dragging
-    [@pointerButton,
-     @kernelButton,
-     @assocButton,
-     @descButton,
-     @connectButton].each {
+    [@pointer_button,
+     @kernel_button,
+     @assoc_button,
+     @desc_button,
+     @connect_button].each {
       |c| c.add_action_listener do |e|
-        @drawType = e.get_action_command
+        @draw_type = e.get_action_command
 
-        if @drawType == "connection"
+        if @draw_type == "connection"
           @cm.set_dragging_enabled false
         else
           @cm.set_dragging_enabled true
@@ -153,23 +153,23 @@ class Modeler < JFrame
     #Panel & ScrollPane definition
     #@panel = JPanel.new
     @panel = EditorPanel.new
-    @panel.parentFrame = self
-    puts @panel.parentFrame.class.to_s
+    @panel.parent_frame = self
+    puts @panel.parent_frame.class.to_s
     @panel.set_layout nil
     @panel.set_background Color.new 255, 255, 255
     @panel.set_preferred_size Dimension.new 1024, 1024
 
     #Adding delete action to remove components
     stroke = KeyStroke.getKeyStroke(KeyEvent::VK_DELETE)
-    inputMap = @panel.get_input_map JComponent::WHEN_IN_FOCUSED_WINDOW
-    inputMap.put stroke, "DELETE"
+    input_map = @panel.get_input_map JComponent::WHEN_IN_FOCUSED_WINDOW
+    input_map.put stroke, "DELETE"
     @panel.get_action_map.put "DELETE", DeleteAction.new
 
     #Adding scrollbars to JPanel
-    @scrollPane = JScrollPane.new @panel
-    @scrollPane.set_viewport_view @panel
-    @scrollPane.get_vertical_scroll_bar.set_unit_increment 10
-    self.get_content_pane.add @scrollPane
+    @scroll_pane = JScrollPane.new @panel
+    @scroll_pane.set_viewport_view @panel
+    @scroll_pane.get_vertical_scroll_bar.set_unit_increment 10
+    self.get_content_pane.add @scroll_pane
 
     #Registering listener for adding new components
     @panel.add_mouse_listener PanelMouseAction.new
@@ -195,11 +195,11 @@ class Modeler < JFrame
     self.set_visible true
 
     #Entity property dialog setup
-    @entityDialog = EntityDialog.new self, true
-    @entityDialog.set_visible false
+    @entity_dialog = EntityDialog.new self, true
+    @entity_dialog.set_visible false
 
-    @connectionDialog = ConnectionDialog.new self, true
-    @connectionDialog.set_visible false
+    @connection_dialog = ConnectionDialog.new self, true
+    @connection_dialog.set_visible false
 
 
   end
@@ -237,7 +237,7 @@ class Modeler < JFrame
     def add_endpoint(type, entity, initX, initY)
       ep = Endpoint.new
       ep.type = type
-      ep.entityParent = entity
+      ep.entity_parent = entity
       entity.endpoints << ep
       #ep.direction = direction
       #ep.offset = offset
@@ -259,15 +259,15 @@ class Modeler < JFrame
       return ep
     end
 
-    def add_connection(source, target, sourcePoint, targetPoint, sType, tType, name, definition)
-      sourceX = source.get_x
-      sourceY = source.get_y
+    def add_connection(source, target, source_point, target_point, s_type, t_type, name, definition)
+      source_x = source.get_x
+      source_y = source.get_y
 
-      targetX = target.get_x
-      targetY = target.get_y
+      target_x = target.get_x
+      target_y = target.get_y
 
 
-      line = Line2D::Double.new  sourcePoint, targetPoint
+      line = Line2D::Double.new  source_point, target_point
 
       source_intersecting_line = get_intersecting_line source, line
       target_intersecting_line = get_intersecting_line target, line
@@ -283,8 +283,8 @@ class Modeler < JFrame
                                                          target_intersecting_line.get_p1,
                                                          target_intersecting_line.get_p2
 
-      sEP = add_endpoint sType, source, source_intersecting_point.get_x, source_intersecting_point.get_y
-      tEP = add_endpoint tType, target, target_intersecting_point.get_x, target_intersecting_point.get_y
+      sEP = add_endpoint s_type, source, source_intersecting_point.get_x, source_intersecting_point.get_y
+      tEP = add_endpoint t_type, target, target_intersecting_point.get_x, target_intersecting_point.get_y
 
       connection = Connection.new sEP, tEP, name, definition
 
@@ -304,19 +304,19 @@ class Modeler < JFrame
     end
 
     def get_intersecting_line entity, connnectLine
-      entityX = entity.get_x
-      entityY = entity.get_y
+      entity_x = entity.get_x
+      entity_y = entity.get_y
 
       edges = []
 
       #Top edge
-      edges << (Line2D::Double.new entityX, entityY, entityX + ENTITY_WIDTH, entityY)
+      edges << (Line2D::Double.new entity_x, entity_y, entity_x + ENTITY_WIDTH, entity_y)
       #Bottom edge
-      edges << (Line2D::Double.new entityX, entityY + ENTITY_HEIGHT, entityX + ENTITY_WIDTH, entityY + ENTITY_HEIGHT)
+      edges << (Line2D::Double.new entity_x, entity_y + ENTITY_HEIGHT, entity_x + ENTITY_WIDTH, entity_y + ENTITY_HEIGHT)
       #Left edge
-      edges << (Line2D::Double.new entityX, entityY, entityX, entityY + ENTITY_HEIGHT)
+      edges << (Line2D::Double.new entity_x, entity_y, entity_x, entity_y + ENTITY_HEIGHT)
       #Right edge
-      edges <<  (Line2D::Double.new entityX + ENTITY_WIDTH, entityY, entityX + ENTITY_WIDTH, entityY + ENTITY_HEIGHT)
+      edges <<  (Line2D::Double.new entity_x + ENTITY_WIDTH, entity_y, entity_x + ENTITY_WIDTH, entity_y + ENTITY_HEIGHT)
 
       edges.each do |e|
         return e if connnectLine.intersects_line e
@@ -324,18 +324,24 @@ class Modeler < JFrame
 
     end
 
-    def get_intersection_point pointA, pointB, pointC, pointD
-      xA, yA = pointA.get_x, pointA.get_y
-      xB, yB = pointB.get_x, pointB.get_y
-      xC, yC = pointC.get_x, pointC.get_y
-      xD, yD = pointD.get_x, pointD.get_y
+    def get_intersection_point point_a, point_b, point_c, point_d
+      x_a, y_a = point_a.get_x, point_a.get_y
+      x_b, y_b = point_b.get_x, point_b.get_y
+      x_c, y_c = point_c.get_x, point_c.get_y
+      x_d, y_d = point_d.get_x, point_d.get_y
 
-      interX = xC + (((((yC-yA)*(xB-xA)) - ((xC-xA)*(yB-yA))) / (((xD-xC)*(yB-yA)) - ((yD-yC)*(xB-xA)))) * (xD-xC))
-      interY = yC + (((((yC-yA)*(xB-xA)) - ((xC-xA)*(yB-yA))) / (((xD-xC)*(yB-yA)) - ((yD-yC)*(xB-xA)))) * (yD-yC))
+      inter_x = x_c + (((((y_c-y_a)*(x_b-x_a)) - ((x_c-x_a)*(y_b-y_a))) / (((x_d-x_c)*(y_b-y_a)) - ((y_d-y_c)*(x_b-x_a)))) * (x_d-x_c))
+      inter_y = y_c + (((((y_c-y_a)*(x_b-x_a)) - ((x_c-x_a)*(y_b-y_a))) / (((x_d-x_c)*(y_b-y_a)) - ((y_d-y_c)*(x_b-x_a)))) * (y_d-y_c))
 
 
-      return Point2D::Double.new interX, interY
+      return Point2D::Double.new inter_x, inter_y
 
+    end
+
+    def get_entity id
+      @entities.each do |e|
+        return if e.id == id
+      end
     end
 
 end

@@ -13,14 +13,19 @@ class PanelMouseAction < MouseAdapter
     y = e.getY
 
     parent = (SwingUtilities.getWindowAncestor source)
-    type = parent.drawType
+    type = parent.draw_type
+
+
 
     if ["kernel","associative","descriptive"].include? type
 
       name = JOptionPane.showInputDialog parent, "Enter name:", "New entity", JOptionPane::PLAIN_MESSAGE, nil, nil, "untitled"
 
       if  !name.nil? && !name.empty?
-        parent.add_entity name, type, nil, x, y
+       ent = parent.add_entity name, type, nil, x-55, y-30
+       ent.id = parent.max_id
+       parent.max_id = parent.max_id + 1
+      puts ent.id.to_s
       end
     end
   end

@@ -3,7 +3,7 @@ include Java
 import javax.swing.JPanel
 
 class EditorPanel < JPanel
-  attr_accessor :parentFrame, :connections
+  attr_accessor :parent_frame, :connections
 
   def initialize
     super
@@ -23,7 +23,7 @@ class EditorPanel < JPanel
 
      g.setRenderingHints rh
 
-     @parentFrame.connections.each do |c|
+     @parent_frame.connections.each do |c|
        g.set_color c.color
        g.set_stroke c.stroke
        g.draw(c.get_line)
