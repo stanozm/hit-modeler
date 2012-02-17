@@ -12,6 +12,9 @@ require 'actions/panel_mouse_action.rb'
 require 'actions/move_action.rb'
 require 'actions/endpoint_mouse_action.rb'
 
+require "rexml/document"
+include REXML
+
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.JFrame
@@ -39,6 +42,8 @@ import javax.swing.KeyStroke
 import java.awt.geom.Line2D
 import java.awt.geom.Point2D
 import java.awt.event.ComponentAdapter
+import javax.swing.filechooser.FileNameExtensionFilter
+import javax.swing.JFileChooser
 java_import 'ComponentMover'
 
 puts $CLASSPATH
@@ -56,6 +61,11 @@ class Modeler < JFrame
   def initialize
     super "HIT Modeler"
 
+    @select_action = SelectAction.new
+    @endpoint_mouse_action = EndpointMouseAction.new
+    @move_action = MoveAction.new
+
+
     @entities, @connections = []
     @cm = ComponentMover.new
     @max_id = 0
@@ -68,14 +78,53 @@ class Modeler < JFrame
     @entities = []
 
 
+
     #Menu definition
     @menubar = JMenuBar.new
 
     @file_menu = JMenu.new "File"
+    @tools_menu = JMenu.new "Tools"
+    @help_menu = JMenu.new "Help"
 
     @item_new = JMenuItem.new "New"
+    @item_new.add_action_listener do |e|
+      self.clear_model
+      @panel.repaint
+    end
+
     @item_save = JMenuItem.new "Save"
+    @item_save.add_action_listener do |e|
+      file_chooser = JFileChooser.new
+
+      filter = FileNameExtensionFilter.new "xml files", "xml"
+
+      file_chooser.set_accept_all_file_filter_used false
+      file_chooser.addChoosableFileFilter filter
+
+      ret = file_chooser.showDialog self, "Save"
+
+
+      if ret == JFileChooser::APPROVE_OPTION
+        file = file_chooser.getSelectedFile.absolute_path
+
+        self.save_model file
+      end
+    end
     @item_load = JMenuItem.new "Load"
+    @item_load.add_action_listener do |e|
+      file_chooser = JFileChooser.new
+
+      filter = FileNameExtensionFilter.new "xml files", "xml"
+      file_chooser.set_accept_all_file_filter_used false
+      file_chooser.addChoosableFileFilter filter
+      ret = file_chooser.showDialog self, "Load"
+
+
+      if ret == JFileChooser::APPROVE_OPTION
+        file = file_chooser.getSelectedFile.absolute_path
+        self.load_model file
+      end
+    end
     @item_exit = JMenuItem.new "Exit"
 
     @item_exit.set_tool_tip_text "Exit application"
@@ -84,6 +133,10 @@ class Modeler < JFrame
     end
 
 
+    @item_export_to_jpg = JMenuItem.new "Export to JPG"
+    @item_export_to_html = JMenuItem.new "Export to HTML"
+
+    @item_about = JMenuItem.new "About"
 
 
     [@item_new,
@@ -91,7 +144,14 @@ class Modeler < JFrame
      @item_load,
      @item_exit].each{ |c| @file_menu.add c}
 
+    [@item_export_to_jpg,
+     @item_export_to_html].each{ |c| @tools_menu.add c}
+
+    @help_menu.add @item_about
+
     @menubar.add @file_menu
+    @menubar.add @tools_menu
+    @menubar.add @help_menu
     self.set_jmenu_bar @menubar
 
     #-----------------------------------------------------------
@@ -224,8 +284,9 @@ class Modeler < JFrame
       entity.set_bounds x, y, ENTITY_WIDTH, ENTITY_HEIGHT
       @panel.add entity
 
-      entity.add_mouse_listener SelectAction.new
-      entity.add_component_listener MoveAction.new
+      #entity.add_mouse_listener SelectAction.new
+      entity.add_mouse_listener @select_action
+      entity.add_component_listener @move_action
       @entities << entity
       @cm.register_component entity
 
@@ -239,8 +300,7 @@ class Modeler < JFrame
       ep.type = type
       ep.entity_parent = entity
       entity.endpoints << ep
-      #ep.direction = direction
-      #ep.offset = offset
+
       ep.set_bounds initX, initY, ENDPOINT_WIDTH, ENDPOINT_HEIGHT
 
       ep.reset_direction
@@ -250,9 +310,9 @@ class Modeler < JFrame
       @cm.register_component ep
 
       #TODO register additional listeners
-      ep.add_component_listener MoveAction.new
-      ep.add_mouse_listener EndpointMouseAction.new
-      ep.add_mouse_listener SelectAction.new
+      ep.add_component_listener @move_action
+      ep.add_mouse_listener @endpoint_mouse_action
+      ep.add_mouse_listener @select_action
 
       @panel.repaint
 
@@ -342,6 +402,122 @@ class Modeler < JFrame
       @entities.each do |e|
         return if e.id == id
       end
+    end
+
+    def clear_model
+      @panel.remove_all
+      @connections.clear
+      @entities.clear
+    end
+
+    def save_model file
+      doc = Document.new
+      doc << XMLDecl.new
+
+      model_element = Element.new "model"
+      doc << model_element
+      entities_element = Element.new "entities"
+      model_element << entities_element
+      connections_element = Element.new "connections"
+      model_element << connections_element
+
+      @entities.each do |e|
+        entity_element = Element.new "entity"
+        el = Element.new "id"
+        el.text = e.id
+        entity_element << el
+
+        el = Element.new "name"
+        el.text = e.name
+        entity_element << el
+
+        el = Element.new "type"
+        el.text = e.type
+        entity_element << el
+
+        el = Element.new "definition"
+        el.text = e.definition
+        entity_element << el
+
+        el = Element.new "x"
+        el.text = e.get_x
+        entity_element << el
+
+        el = Element.new "y"
+        el.text = e.get_y
+        entity_element << el
+
+        entities_element << entity_element
+      end
+
+      @connections.each do |c|
+        connection_element = Element.new "connection"
+
+        el = Element.new "name"
+        el.text = c.name
+        connection_element << el
+
+        el = Element.new "definition"
+        el.text = c.definition
+        connection_element << el
+
+        el = Element.new "source-entity-id"
+        el.text = c.source_ep.entity_parent.id
+        connection_element << el
+
+        el = Element.new "target-entity-id"
+        el.text = c.target_ep.entity_parent.id
+        connection_element << el
+
+        el = Element.new "source-point-type"
+        el.text = c.source_ep.type
+        connection_element << el
+
+        el = Element.new "target-point-type"
+        el.text = c.target_ep.type
+        connection_element << el
+
+        el = Element.new "source-point-x"
+        el.text = c.source_ep.get_x
+        connection_element << el
+
+        el = Element.new "source-point-y"
+        el.text = c.source_ep.get_y
+        connection_element << el
+
+        el = Element.new "target-point-x"
+        el.text = c.target_ep.get_x
+        connection_element << el
+
+        el = Element.new "target-point-y"
+        el.text = c.target_ep.get_y
+        connection_element << el
+
+        el = Element.new "label-x"
+        el.text = c.label.get_x
+        connection_element << el
+
+        el = Element.new "label-y"
+        el.text = c.label.get_y
+        connection_element << el
+
+        connections_element << connection_element
+      end
+
+      output_file = File.open file, 'w'
+      formatter = Formatters::Pretty.new(2)
+      formatter.compact = true # This is the magic line that does what you need!
+      formatter.write(doc, output_file)
+      output_file.close
+      JOptionPane.show_message_dialog self, "Model has been saved.", "Save file", JOptionPane::INFORMATION_MESSAGE
+    end
+
+    def load_model file
+      xml_file = File.new file
+      doc = Document.new xml_file
+
+      doc.write($stdout, 0)
+
     end
 
 end
