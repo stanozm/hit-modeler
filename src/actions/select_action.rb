@@ -354,9 +354,4 @@ class SelectAction < MouseAdapter
       button.set_enabled false unless button.get_text == leave_enabled
     end
   end
-
-
-
-
-
 end

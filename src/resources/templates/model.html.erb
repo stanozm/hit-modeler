@@ -1,0 +1,31 @@
+<html>
+<h1>Entities</h1>
+<ul>
+    <% @entities.each do |entity| %>
+        <li><a href="#<%= entity.name + entity.id.to_s %>"><%= entity.name %></a></li>
+    <% end %>
+</ul>
+<h1>Connections</h1>
+<ul>
+    <% @connections.each do |con| %>
+        <li><a href="#<%= con.name %>"><%= con.name %></a></li>
+    <% end %>
+</ul>
+
+<h2>Entities definition</h2>
+<% @entities.each do |entity| %>
+    <p>
+        <a name="<%= entity.name + entity.id.to_s %>"></a><b>Name:</b> <%= entity.name %> </br>
+        <b>Type:</b> <%= entity.type %> </br>
+        <%= entity.definition %>
+    </p>
+<% end %>
+</br>
+<h2>Connections definition</h2>
+<% @connections.each do |con| %>
+    <p>
+        <a name="<%= con.name %>"></a><b>Ref:</b> <%= con.name %> </br>
+        <%= con.definition %>
+    </p>
+<% end %>
+</html>

@@ -12,6 +12,8 @@ require 'actions/panel_mouse_action.rb'
 require 'actions/move_action.rb'
 require 'actions/endpoint_mouse_action.rb'
 
+require 'erb'
+
 require "rexml/document"
 include REXML
 
@@ -39,6 +41,7 @@ import javax.swing.BorderFactory
 import javax.swing.JLabel
 import javax.swing.AbstractAction
 import javax.swing.KeyStroke
+import java.awt.event.ActionEvent
 import java.awt.geom.Line2D
 import java.awt.geom.Point2D
 import java.awt.event.ComponentAdapter
@@ -56,22 +59,21 @@ class Modeler < JFrame
 
   attr_accessor :draw_type, :entities, :connections, :focus, :entity_dialog, :connection_dialog, :panel, :max_id
 
+  MODEL_WIDTH = 1024
+  MODEL_HEIGHT = 768
   ENTITY_WIDTH = 110
   ENTITY_HEIGHT = 60
   ENDPOINT_WIDTH = 16
   ENDPOINT_HEIGHT = 16
+  PATH_TO_TEMPLATE = "resources/templates/model.html.erb"
 
 
 
   def initialize
     super "HIT Modeler"
 
-    @select_action = SelectAction.new
-    @endpoint_mouse_action = EndpointMouseAction.new
-    @move_action = MoveAction.new
-
-
-    @entities, @connections = []
+    @entities = []
+    @connections = []
     @cm = ComponentMover.new
     @max_id = 0
 
@@ -79,214 +81,23 @@ class Modeler < JFrame
   end
 
   def init_ui
-    @connections = []
-    @entities = []
+    #Actions setup
+    init_actions
 
+    #Menu setup
+    init_menu
 
+    #Toolbar setup
+    init_toolbar
 
-    #Menu definition
-    @menubar = JMenuBar.new
+    #Panel setup
+    init_panel
 
-    @file_menu = JMenu.new "File"
-    @tools_menu = JMenu.new "Tools"
-    @help_menu = JMenu.new "Help"
-
-    @item_new = JMenuItem.new "New"
-    @item_new.add_action_listener do |e|
-      self.clear_model
-      @panel.repaint
-    end
-
-    @item_save = JMenuItem.new "Save"
-    @item_save.add_action_listener do |e|
-      file_chooser = JFileChooser.new
-
-      filter = FileNameExtensionFilter.new "xml files", "xml"
-
-      file_chooser.set_accept_all_file_filter_used false
-      file_chooser.addChoosableFileFilter filter
-
-      ret = file_chooser.showDialog self, "Save"
-
-
-      if ret == JFileChooser::APPROVE_OPTION
-        file = file_chooser.getSelectedFile.absolute_path
-
-        self.save_model file
-        JOptionPane.show_message_dialog self, "Model has been saved.", "Save file", JOptionPane::INFORMATION_MESSAGE
-      end
-    end
-    @item_load = JMenuItem.new "Load"
-    @item_load.add_action_listener do |e|
-      file_chooser = JFileChooser.new
-
-      filter = FileNameExtensionFilter.new "xml files", "xml"
-      file_chooser.set_accept_all_file_filter_used false
-      file_chooser.addChoosableFileFilter filter
-      ret = file_chooser.showDialog self, "Load"
-
-
-      if ret == JFileChooser::APPROVE_OPTION
-        file = file_chooser.getSelectedFile.absolute_path
-        self.set_cursor(Cursor.get_predefined_cursor(Cursor::WAIT_CURSOR))
-        self.load_model file
-        self.set_cursor nil
-      end
-    end
-    @item_exit = JMenuItem.new "Exit"
-
-    @item_exit.set_tool_tip_text "Exit application"
-    @item_exit.add_action_listener do |e|
-      System.exit 0
-    end
-
-
-    @item_export_to_jpg = JMenuItem.new "Export to JPG"
-    @item_export_to_jpg.add_action_listener do |e|
-      file_chooser = JFileChooser.new
-
-      filter = FileNameExtensionFilter.new "jpg", "jpg"
-      file_chooser.set_accept_all_file_filter_used false
-      file_chooser.addChoosableFileFilter filter
-      ret = file_chooser.showDialog self, "Export"
-
-
-      if ret == JFileChooser::APPROVE_OPTION
-        file = file_chooser.getSelectedFile.absolute_path
-        self.export_to_jpg file
-        JOptionPane.show_message_dialog self, "Model has been exported to JPG.", "Export model", JOptionPane::INFORMATION_MESSAGE
-      end
-    end
-
-
-    @item_export_to_html = JMenuItem.new "Export to HTML"
-
-    @item_about = JMenuItem.new "About"
-
-
-    [@item_new,
-     @item_save,
-     @item_load,
-     @item_exit].each{ |c| @file_menu.add c}
-
-    [@item_export_to_jpg,
-     @item_export_to_html].each{ |c| @tools_menu.add c}
-
-    @help_menu.add @item_about
-
-    @menubar.add @file_menu
-    @menubar.add @tools_menu
-    @menubar.add @help_menu
-    self.set_jmenu_bar @menubar
-
-    #-----------------------------------------------------------
-
-    #Toolbar definition
-    @toolbar = JToolBar.new
-
-    #Toolbar buttons
-    @pointer_button = JToggleButton.new "pointer"
-    @kernel_button = JToggleButton.new "kernel"
-    @assoc_button = JToggleButton.new "associative"
-    @desc_button = JToggleButton.new "descriptive"
-    @connect_button = JToggleButton.new "connection"
-
-    #Adding buttons into button group, so that only one is selected at a time
-    @group = ButtonGroup.new
-    [@pointer_button,
-     @kernel_button,
-     @assoc_button,
-     @desc_button,
-     @connect_button].each {|c| @group.add c}
-
-    #Default selection
-    @group.set_selected(@pointer_button.get_model,true)
-    @draw_type = "pointer"
-
-    #Adding button into toolbar
-    #TODO replace text with icons
-    [@pointer_button,
-     @kernel_button,
-     @assoc_button,
-     @desc_button,
-     @connect_button].each {|c| @toolbar.add c}
-
-    #Sets draw_type after switching button selection
-    #and enables/disables dragging
-    [@pointer_button,
-     @kernel_button,
-     @assoc_button,
-     @desc_button,
-     @connect_button].each {
-      |c| c.add_action_listener do |e|
-        @draw_type = e.get_action_command
-
-        if @draw_type == "connection"
-          @cm.set_dragging_enabled false
-        else
-          @cm.set_dragging_enabled true
-        end
-      end
-     }
-
-    #Adding toolbar to frame
-    self.add @toolbar, BorderLayout::NORTH
-
-    #------------------------------------------------------------
-
-
-    #Panel & ScrollPane definition
-    #@panel = JPanel.new
-    @panel = EditorPanel.new
-    @panel.parent_frame = self
-    puts @panel.parent_frame.class.to_s
-    @panel.set_layout nil
-    @panel.set_background Color.new 255, 255, 255
-    @panel.set_preferred_size Dimension.new 1024, 1024
-
-    #Adding delete action to remove components
-    stroke = KeyStroke.getKeyStroke(KeyEvent::VK_DELETE)
-    input_map = @panel.get_input_map JComponent::WHEN_IN_FOCUSED_WINDOW
-    input_map.put stroke, "DELETE"
-    @panel.get_action_map.put "DELETE", DeleteAction.new
-
-    #Adding scrollbars to JPanel
-    @scroll_pane = JScrollPane.new @panel
-    @scroll_pane.set_viewport_view @panel
-    @scroll_pane.get_vertical_scroll_bar.set_unit_increment 10
-    self.get_content_pane.add @scroll_pane
-
-    #Registering listener for adding new components
-    @panel.add_mouse_listener PanelMouseAction.new
-
-
-    add_entity "assoc", "associative", nil, 200, 200
-    e1 = add_entity "kernel", "kernel", nil, 50, 50
-    e2 = add_entity "desc", "descriptive", "aaa", 300, 10
-
-    c1 = add_connection e1, e2, (Point2D::Double.new 50+55, 50+30), (Point2D::Double.new 300+55, 10+30), "0m", "0m", "aaa", "dd"
-
-
-
-
-    #-----------------------------------------------------------
+    #Dialogs setup
+    init_dialogs
 
     #Frame setup
-    self.set_default_close_operation JFrame::EXIT_ON_CLOSE
-    self.set_size 1024, 768
-    self.set_location_relative_to nil
-
-    #TODO Remove before testing
-    self.set_visible true
-
-    #Entity property dialog setup
-    @entity_dialog = EntityDialog.new self, true
-    @entity_dialog.set_visible false
-
-    @connection_dialog = ConnectionDialog.new self, true
-    @connection_dialog.set_visible false
-
-
+    init_frame
   end
     #-----------------------------------------------------------
 
@@ -334,7 +145,6 @@ class Modeler < JFrame
       @panel.add ep
       @cm.register_component ep
 
-      #TODO register additional listeners
       ep.add_component_listener @move_action
       ep.add_mouse_listener @endpoint_mouse_action
       ep.add_mouse_listener @select_action
@@ -672,7 +482,261 @@ class Modeler < JFrame
       return Rectangle.new leftmost_x, top_y, rightmost_x - leftmost_x, bottom_y - top_y
     end
 
+    def export_to_template template, file
+      renderer = ERB.new(File.read(template))
+      output = renderer.result binding
+      output_file = File.open file, 'w'
+      output_file << output
+      output_file.close
+    end
+
+  private
+    def init_menu
+      @menubar = JMenuBar.new
+
+      @file_menu = JMenu.new "File"
+      @file_menu.set_mnemonic KeyEvent::VK_F
+
+      @tools_menu = JMenu.new "Tools"
+      @tools_menu.set_mnemonic KeyEvent::VK_T
+
+      @help_menu = JMenu.new "Help"
+      @help_menu.set_mnemonic KeyEvent::VK_H
+
+      @item_new = JMenuItem.new "New", (ImageIcon.new "resources/icons/new.png")
+      @item_new.set_mnemonic KeyEvent::VK_N
+      @item_new.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_N, ActionEvent::CTRL_MASK)
+      @item_new.add_action_listener do |e|
+        self.clear_model
+        @panel.repaint
+      end
+
+      @item_save = JMenuItem.new "Save", (ImageIcon.new "resources/icons/Save16.gif")
+      @item_save.set_mnemonic KeyEvent::VK_S
+      @item_save.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_S, ActionEvent::CTRL_MASK)
+      @item_save.add_action_listener do |e|
+        file_chooser = JFileChooser.new
+
+        filter = FileNameExtensionFilter.new "xml files", "xml"
+
+        file_chooser.set_accept_all_file_filter_used false
+        file_chooser.addChoosableFileFilter filter
+
+        ret = file_chooser.showDialog self, "Save"
+
+
+        if ret == JFileChooser::APPROVE_OPTION
+          file = file_chooser.getSelectedFile.absolute_path
+
+          self.save_model file
+          JOptionPane.show_message_dialog self, "Model has been saved.", "Save file", JOptionPane::INFORMATION_MESSAGE
+        end
+      end
+      @item_load = JMenuItem.new "Load", (ImageIcon.new "resources/icons/open.png")
+      @item_load.set_mnemonic KeyEvent::VK_L
+      @item_load.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_L, ActionEvent::CTRL_MASK)
+      @item_load.add_action_listener do |e|
+        file_chooser = JFileChooser.new
+
+        filter = FileNameExtensionFilter.new "xml files", "xml"
+        file_chooser.set_accept_all_file_filter_used false
+        file_chooser.addChoosableFileFilter filter
+        ret = file_chooser.showDialog self, "Load"
+
+
+        if ret == JFileChooser::APPROVE_OPTION
+          file = file_chooser.getSelectedFile.absolute_path
+          self.set_cursor(Cursor.get_predefined_cursor(Cursor::WAIT_CURSOR))
+          self.load_model file
+          self.set_cursor nil
+        end
+      end
+
+      @item_exit = JMenuItem.new "Exit", (ImageIcon.new "resources/icons/exit.png")
+      @item_exit.set_mnemonic KeyEvent::VK_E
+      @item_exit.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_X, ActionEvent::CTRL_MASK)
+      @item_exit.add_action_listener do |e|
+        System.exit 0
+      end
+
+
+      @item_export_to_jpg = JMenuItem.new "Export to JPG", (ImageIcon.new "resources/icons/image.png")
+      @item_export_to_jpg.set_mnemonic KeyEvent::VK_J
+      @item_export_to_jpg.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_J, ActionEvent::CTRL_MASK)
+      @item_export_to_jpg.add_action_listener do |e|
+        file_chooser = JFileChooser.new
+
+        filter = FileNameExtensionFilter.new "jpg", "jpg"
+        file_chooser.set_accept_all_file_filter_used false
+        file_chooser.addChoosableFileFilter filter
+        ret = file_chooser.showDialog self, "Export"
+
+
+        if ret == JFileChooser::APPROVE_OPTION
+          file = file_chooser.getSelectedFile.absolute_path
+          self.export_to_jpg file
+          JOptionPane.show_message_dialog self, "Model has been exported to JPG.", "Export model", JOptionPane::INFORMATION_MESSAGE
+        end
+      end
+
+
+      @item_export_to_html = JMenuItem.new "Export to HTML", (ImageIcon.new "resources/icons/html.png")
+      @item_export_to_html.set_mnemonic KeyEvent::VK_H
+      @item_export_to_html.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_H, ActionEvent::CTRL_MASK)
+      @item_export_to_html.add_action_listener do |e|
+        file_chooser = JFileChooser.new
+
+        filter = FileNameExtensionFilter.new "html", "html", "htm"
+        file_chooser.set_accept_all_file_filter_used false
+        file_chooser.addChoosableFileFilter filter
+        ret = file_chooser.showDialog self, "Export"
+
+
+        if ret == JFileChooser::APPROVE_OPTION
+          file = file_chooser.getSelectedFile.absolute_path
+          self.export_to_template PATH_TO_TEMPLATE, file
+          JOptionPane.show_message_dialog self, "Model has been exported.", "Export model", JOptionPane::INFORMATION_MESSAGE
+        end
+      end
+
+      @item_about = JMenuItem.new "About", (ImageIcon.new "resources/icons/Information16.gif")
+      @item_about.set_mnemonic KeyEvent::VK_A
+      @item_about.set_accelerator KeyStroke.get_key_stroke("F1")
+
+
+      [@item_new,
+       @item_save,
+       @item_load,
+       @item_exit].each{ |c| @file_menu.add c}
+
+      [@item_export_to_jpg,
+       @item_export_to_html].each{ |c| @tools_menu.add c}
+
+      @help_menu.add @item_about
+
+      @menubar.add @file_menu
+      @menubar.add @tools_menu
+      @menubar.add @help_menu
+      self.set_jmenu_bar @menubar
+    end
+
+    def init_toolbar
+      @toolbar = JToolBar.new
+      @toolbar.set_rollover true
+
+      #Toolbar buttons
+      @pointer_button = JToggleButton.new ImageIcon.new "resources/icons/pointer.png"
+      @pointer_button.set_action_command "pointer"
+      @pointer_button.set_tool_tip_text "Select tool"
+
+      @kernel_button = JToggleButton.new ImageIcon.new "resources/icons/kernel.png"
+      @kernel_button.set_action_command "kernel"
+      @kernel_button.set_tool_tip_text "Create kernel entity"
+
+      @assoc_button = JToggleButton.new ImageIcon.new "resources/icons/associative.png"
+      @assoc_button.set_action_command "associative"
+      @assoc_button.set_tool_tip_text "Create associative entity"
+
+      @desc_button = JToggleButton.new ImageIcon.new "resources/icons/descriptive.png"
+      @desc_button.set_action_command "descriptive"
+      @desc_button.set_tool_tip_text "Create characteristic entity"
+
+      @connect_button = JToggleButton.new ImageIcon.new "resources/icons/connection.png"
+      @connect_button.set_action_command "connection"
+      @connect_button.set_tool_tip_text "Create connection"
+
+      #Adding buttons into button group, so that only one is selected at a time
+      @group = ButtonGroup.new
+      [@pointer_button,
+       @kernel_button,
+       @assoc_button,
+       @desc_button,
+       @connect_button].each {|c| @group.add c}
+
+      #Default selection
+      @group.set_selected(@pointer_button.get_model,true)
+      @draw_type = "pointer"
+
+      #Adding button into toolbar
+      #TODO replace text with icons
+      @toolbar.add @pointer_button
+      @toolbar.add_separator
+      [@kernel_button,
+       @assoc_button,
+       @desc_button].each {|c| @toolbar.add c}
+      @toolbar.add_separator
+      @toolbar.add @connect_button
+
+      #Sets draw_type after switching button selection
+      #and enables/disables dragging
+      [@pointer_button,
+       @kernel_button,
+       @assoc_button,
+       @desc_button,
+       @connect_button].each {
+          |c| c.add_action_listener do |e|
+          @draw_type = e.get_action_command
+
+          if @draw_type == "connection"
+            @cm.set_dragging_enabled false
+          else
+            @cm.set_dragging_enabled true
+          end
+        end
+      }
+
+      #Adding toolbar to frame
+      self.add @toolbar, BorderLayout::NORTH
+    end
+
+    def init_panel
+      @panel = EditorPanel.new
+      @panel.parent_frame = self
+      puts @panel.parent_frame.class.to_s
+      @panel.set_layout nil
+      @panel.set_background Color.new 255, 255, 255
+      @panel.set_preferred_size Dimension.new 1024, 1024
+
+      #Adding delete action to remove components
+      stroke = KeyStroke.getKeyStroke(KeyEvent::VK_DELETE)
+      input_map = @panel.get_input_map JComponent::WHEN_IN_FOCUSED_WINDOW
+      input_map.put stroke, "DELETE"
+      @panel.get_action_map.put "DELETE", DeleteAction.new
+
+      #Adding scrollbars to JPanel
+      @scroll_pane = JScrollPane.new @panel
+      @scroll_pane.set_viewport_view @panel
+      @scroll_pane.get_vertical_scroll_bar.set_unit_increment 10
+      self.get_content_pane.add @scroll_pane
+
+      #Registering listener for adding new components
+      @panel.add_mouse_listener PanelMouseAction.new
+
+    end
+
+    def init_dialogs
+      @entity_dialog = EntityDialog.new self, true
+      @entity_dialog.set_visible false
+
+      @connection_dialog = ConnectionDialog.new self, true
+      @connection_dialog.set_visible false
+    end
+
+    def init_frame
+      self.set_default_close_operation JFrame::EXIT_ON_CLOSE
+      self.set_size MODEL_WIDTH, MODEL_HEIGHT
+      self.set_location_relative_to nil
+      self.set_visible false
+    end
+
+    def init_actions
+      @select_action = SelectAction.new
+      @endpoint_mouse_action = EndpointMouseAction.new
+      @move_action = MoveAction.new
+    end
+
 end
 
 
-Modeler.new
+modeler = Modeler.new
+modeler.set_visible true
