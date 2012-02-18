@@ -44,12 +44,17 @@ import java.awt.geom.Point2D
 import java.awt.event.ComponentAdapter
 import javax.swing.filechooser.FileNameExtensionFilter
 import javax.swing.JFileChooser
+import javax.swing.SwingWorker
+import java.awt.Cursor
+import java.awt.image.BufferedImage
+import javax.imageio.ImageIO
+import java.awt.Rectangle
 java_import 'ComponentMover'
 
 puts $CLASSPATH
 class Modeler < JFrame
 
-  attr_accessor :draw_type, :entities, :connections, :cm, :focus, :entity_dialog, :connection_dialog, :panel, :max_id
+  attr_accessor :draw_type, :entities, :connections, :focus, :entity_dialog, :connection_dialog, :panel, :max_id
 
   ENTITY_WIDTH = 110
   ENTITY_HEIGHT = 60
@@ -108,6 +113,7 @@ class Modeler < JFrame
         file = file_chooser.getSelectedFile.absolute_path
 
         self.save_model file
+        JOptionPane.show_message_dialog self, "Model has been saved.", "Save file", JOptionPane::INFORMATION_MESSAGE
       end
     end
     @item_load = JMenuItem.new "Load"
@@ -122,7 +128,9 @@ class Modeler < JFrame
 
       if ret == JFileChooser::APPROVE_OPTION
         file = file_chooser.getSelectedFile.absolute_path
+        self.set_cursor(Cursor.get_predefined_cursor(Cursor::WAIT_CURSOR))
         self.load_model file
+        self.set_cursor nil
       end
     end
     @item_exit = JMenuItem.new "Exit"
@@ -134,6 +142,23 @@ class Modeler < JFrame
 
 
     @item_export_to_jpg = JMenuItem.new "Export to JPG"
+    @item_export_to_jpg.add_action_listener do |e|
+      file_chooser = JFileChooser.new
+
+      filter = FileNameExtensionFilter.new "jpg", "jpg"
+      file_chooser.set_accept_all_file_filter_used false
+      file_chooser.addChoosableFileFilter filter
+      ret = file_chooser.showDialog self, "Export"
+
+
+      if ret == JFileChooser::APPROVE_OPTION
+        file = file_chooser.getSelectedFile.absolute_path
+        self.export_to_jpg file
+        JOptionPane.show_message_dialog self, "Model has been exported to JPG.", "Export model", JOptionPane::INFORMATION_MESSAGE
+      end
+    end
+
+
     @item_export_to_html = JMenuItem.new "Export to HTML"
 
     @item_about = JMenuItem.new "About"
@@ -363,6 +388,33 @@ class Modeler < JFrame
       connection
     end
 
+    def add_connection_specific_endpoints(source, target, source_point, target_point, s_type, t_type, name, definition)
+      ource_x = source.get_x
+      source_y = source.get_y
+
+      target_x = target.get_x
+      target_y = target.get_y
+
+      sEP = add_endpoint s_type, source, source_point.get_x, source_point.get_y
+      tEP = add_endpoint t_type, target, target_point.get_x, target_point.get_y
+
+      connection = Connection.new sEP, tEP, name, definition
+
+      [sEP,tEP].each {|ep| ep.connection = connection}
+
+      label = JLabel.new name
+      @panel.add label
+      @cm.register_component label
+
+
+      label.set_size label.get_preferred_size
+      connection.label = label
+      connection.reset_label_position
+
+      @connections << connection
+      connection
+    end
+
     def get_intersecting_line entity, connnectLine
       entity_x = entity.get_x
       entity_y = entity.get_y
@@ -400,7 +452,7 @@ class Modeler < JFrame
 
     def get_entity id
       @entities.each do |e|
-        return if e.id == id
+        return e if e.id == id
       end
     end
 
@@ -509,19 +561,118 @@ class Modeler < JFrame
       formatter.compact = true # This is the magic line that does what you need!
       formatter.write(doc, output_file)
       output_file.close
-      JOptionPane.show_message_dialog self, "Model has been saved.", "Save file", JOptionPane::INFORMATION_MESSAGE
+
     end
 
     def load_model file
+      self.clear_model
+
       xml_file = File.new file
       doc = Document.new xml_file
 
-      doc.write($stdout, 0)
+      doc.elements.each("model/entities/entity") do  |element|
+
+        id = element.elements[1].text.to_i
+        name =  element.elements[2].text
+        type = element.elements[3].text
+        definition = element.elements[4].text
+        x = element.elements[5].text.to_i
+        y = element.elements[6].text.to_i
+
+        if id.to_i > @max_id
+          @max_id = id.to_i
+        end
+
+        ent = self.add_entity name, type, definition, x, y
+        ent.id = id
+        puts ent.id
+       # @panel.repaint
+      end
+
+      doc.elements.each("model/connections/connection") do |element|
+        name = element.elements[1].text
+        definition = element.elements[2].text
+        source_entity_id = element.elements[3].text.to_i
+        target_entity_id = element.elements[4].text.to_i
+        source_point_type = element.elements[5].text
+        target_point_type = element.elements[6].text
+        source_point_x = element.elements[7].text.to_i
+        source_point_y = element.elements[8].text.to_i
+        target_point_x = element.elements[9].text.to_i
+        target_point_y = element.elements[10].text.to_i
+        label_x = element.elements[11].text.to_i
+        label_y = element.elements[12].text.to_i
+
+        source_entity = self.get_entity source_entity_id
+        target_entity = self.get_entity target_entity_id
+        source_point = Point2D::Double.new source_point_x, source_point_y
+        target_point = Point2D::Double.new target_point_x, target_point_y
+
+        con = self.add_connection_specific_endpoints source_entity,
+                                                     target_entity,
+                                                     source_point,
+                                                     target_point,
+                                                     source_point_type,
+                                                     target_point_type,
+                                                     name,
+                                                     definition
+
+        con.label.set_location label_x, label_y
+        #@panel.repaint
+      end
+      @panel.repaint
+    end
+
+    def export_to_jpg file
+      width = @panel.get_width
+      height = @panel.get_height
+
+      buffered_image = BufferedImage.new width, height, BufferedImage::TYPE_INT_RGB
+      graphics  = buffered_image.create_graphics
+      @panel.paint(graphics);
+
+      cropping_rectangle = self.get_bounding_rectangle
+      cropped_image = buffered_image.get_subimage cropping_rectangle.get_x,
+                                                  cropping_rectangle.get_y,
+                                                  cropping_rectangle.get_width,
+                                                  cropping_rectangle.get_height
+
+      output_file = java.io.File.new file
+
+      ImageIO.write cropped_image, "jpg", output_file
 
     end
 
-end
+    def get_bounding_rectangle
+      leftmost_x = @panel.get_width
+      rightmost_x = 0
+      top_y = @panel.get_height
+      bottom_y = 0
 
+      @entities.each do |e|
+        e_x = e.get_x
+        e_y = e.get_y
+
+        if e_x < leftmost_x
+          leftmost_x = e_x
+        end
+
+        if e_x + ENTITY_WIDTH > rightmost_x
+          rightmost_x = e_x + ENTITY_WIDTH
+        end
+
+        if e_y < top_y
+          top_y = e_y
+        end
+
+        if e_y + ENTITY_HEIGHT > bottom_y
+          bottom_y = e_y + ENTITY_HEIGHT
+        end
+      end
+      return Rectangle.new leftmost_x, top_y, rightmost_x - leftmost_x, bottom_y - top_y
+    end
+
+end
 
 
 Modeler.new
