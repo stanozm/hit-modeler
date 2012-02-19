@@ -1,7 +1,7 @@
 <component name="libraryTable">
-  <library name="CDialog">
+  <library name="ComponentMover">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/jars/CDialog.jar!/" />
+      <root url="jar://$PROJECT_DIR$/jars/ComponentMover.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

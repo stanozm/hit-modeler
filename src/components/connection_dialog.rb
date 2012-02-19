@@ -5,6 +5,11 @@ java_import 'CDialog'
 import javax.swing.ButtonGroup
 import javax.swing.JFrame
 
+# Author::    Stanislav Chren (mailto:stanislavch@gmail.com)
+# Copyright:: Copyright (c) 2012
+# License::   GPL-3.0
+#
+# This class represents dialog for editiing connection properties
 class ConnectionDialog < CDialog
 
   attr_accessor :close_action, :radio_group_source, :radio_group_target

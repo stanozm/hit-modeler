@@ -2,14 +2,17 @@ include Java
 
 import javax.swing.JPanel
 
+# Author::    Stanislav Chren (mailto:stanislavch@gmail.com)
+# Copyright:: Copyright (c) 2012
+# License::   GPL-3.0
+#
+# This class represents panel on which whole model is drawn. It is also responsible for drawing lines between endpoints
+# of the same connection
 class EditorPanel < JPanel
-  attr_accessor :parent_frame, :connections
+  attr_accessor :parent_frame
 
   def initialize
     super
-
-
-
   end
 
   def paintComponent g

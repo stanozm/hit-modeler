@@ -4,7 +4,11 @@ import javax.swing.JLabel
 import java.awt.Color
 import java.awt.Font
 import java.awt.RenderingHints
-
+# Author::    Stanislav Chren (mailto:stanislavch@gmail.com)
+# Copyright:: Copyright (c) 2012
+# License::   GPL-3.0
+#
+# This class represents entity of the model
 class Entity < JLabel
 
   attr_accessor :name, :definition, :type, :endpoints,:id

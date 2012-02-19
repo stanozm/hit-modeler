@@ -17,9 +17,9 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" scope="PROVIDED" name="RVM: jruby-1.6.5 [global] facet library" level="application" />
+    <orderEntry type="library" name="CDialog" level="project" />
     <orderEntry type="library" name="ComponentMover" level="project" />
     <orderEntry type="library" name="EDialog" level="project" />
-    <orderEntry type="library" name="CDialog" level="project" />
   </component>
 </module>
 

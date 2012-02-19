@@ -7,6 +7,12 @@ import java.awt.Color
 import javax.swing.BorderFactory
 import java.awt.BasicStroke
 
+# Author::    Stanislav Chren (mailto:stanislavch@gmail.com)
+# Copyright:: Copyright (c) 2012
+# License::   GPL-3.0
+#
+# This class can be used as a listener which detects mouse clicks on panel. Following action depends on draw_type
+# attribute of main window. It will either create enitiy of specified type or deselects any currently selected object
 class PanelMouseAction < MouseAdapter
 
   def mouseReleased e
@@ -18,7 +24,6 @@ class PanelMouseAction < MouseAdapter
     parent = (SwingUtilities.getWindowAncestor source)
     type = parent.draw_type
 
-    #if ["kernel","associative","descriptive"].include? type
      case type
        when "kernel", "associative", "descriptive"
           name = JOptionPane.showInputDialog parent, "Enter name:", "New entity", JOptionPane::PLAIN_MESSAGE, nil, nil, "untitled"
@@ -26,8 +31,8 @@ class PanelMouseAction < MouseAdapter
             ent = parent.add_entity name, type, nil, x-55, y-30
             ent.id = parent.max_id
             parent.max_id = parent.max_id + 1
-            puts ent.id.to_s
           end
+
        when "pointer"
          focus = parent.focus
          focus_class = focus.class.to_s

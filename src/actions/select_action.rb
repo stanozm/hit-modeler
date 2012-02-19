@@ -6,8 +6,25 @@ import javax.swing.BorderFactory
 import java.awt.Color
 import java.awt.BasicStroke
 
+# Author::    Stanislav Chren (mailto:stanislavch@gmail.com)
+# Copyright:: Copyright (c) 2012
+# License::   GPL-3.0
+#
+# This class can be used as a listener which detects mouse clicks on entities and endpoints.
+# If one click is registered, component is selected, which means deselecting previously selected. Selection
+# visualised by painting itself or its borders blue.
+# If two double-click is detected, the property dialog of the clicked component is shown and afterward its contents
+# processed
+# Moreover, if main window's attribute draw_type is set to "connection", behaviour is different:
+# * pressed mouse on entity is detected. This entity becomes source entity
+# * if mouse is moved and still pressed, when it enters boundary of another entity, this entity is marked as target.
+# * connection between marked entities is created. Source points for endpoints are set as points in the middle
+#   of marked entities
+# Self-referencing connections are not supported at this moment
+# TODO: add self-referencing connections support
 class SelectAction < MouseAdapter
 
+  # if set to false, default connection between entities is created, without displaying property dialog
   SHOW_CONNECTION_DIALOG = true
 
   def initialize
@@ -66,7 +83,6 @@ class SelectAction < MouseAdapter
       parent.panel.repaint
       #double-click
 
-      #TODO consolidate with endpoint click!!!!!
       if click_count == 2 && source.class.to_s == "Entity"
 
         #Obtain entity properties dialog
@@ -129,10 +145,7 @@ class SelectAction < MouseAdapter
         property_dialog.get_target_label.set_text "["+ connection.target_ep.entity_parent.name + "]"
 
         source_type = connection.source_ep.type
-        puts source_type
-
         target_type = connection.target_ep.type
-        puts target_type
 
         #Selects radio button based on source point
         case source_type
@@ -205,9 +218,6 @@ class SelectAction < MouseAdapter
             when "1,1"
               connection.target_ep.type = "11"
           end
-
-
-
           parent.panel.repaint
         end
       end
@@ -223,22 +233,17 @@ class SelectAction < MouseAdapter
     parent = (SwingUtilities.getWindowAncestor source)
 
     if parent.draw_type == "connection"  && source.class.to_s == "Entity"
-      puts source.name
       @@pressed_source = source
       border = BorderFactory.create_line_border Color::green, 2
       source.set_border border
-
-
     end
   end
 
   def mouseEntered e
     source = e.source
-    #puts "Pressed" + @@pressed_source.class.to_s
     parent = (SwingUtilities.getWindowAncestor source)
 
     if parent.draw_type == "connection" && !@@pressed_source.nil?  && source.class.to_s == "Entity"
-      puts @@pressed_source.name
       if !source.equal? @@pressed_source && !@@pressed_source.nil?
 
         border = BorderFactory.create_line_border Color::green, 2
@@ -246,27 +251,23 @@ class SelectAction < MouseAdapter
         pressed_entity = @@pressed_source
         source_point = Point2D::Double.new pressed_entity.get_x + 55, pressed_entity.get_y + 30
         target_point = Point2D::Double.new source.get_x + 55, source.get_y + 30
-        #puts "Before adding " + @@pressed_source.class.to_s
+
 
         if SHOW_CONNECTION_DIALOG
 
           property_dialog = parent.connection_dialog
           property_dialog.close_action = "cancel"
 
-          property_dialog.get_name_field.set_text "untitled"
+          property_dialog.get_name_field.set_text ""
 
           property_dialog.get_source_label.set_text "["+ pressed_entity.name + "]"
           property_dialog.get_target_label.set_text "["+ source.name + "]"
-
-
 
           radio = property_dialog.get_zero_to_many_source_radio
           property_dialog.radio_group_source.set_selected radio.get_model, true
 
           radio = property_dialog.get_zero_to_many_target_radio
           property_dialog.radio_group_target.set_selected radio.get_model, true
-
-
 
           #Fills definition text area
           definition = "fill later ..."
@@ -277,7 +278,7 @@ class SelectAction < MouseAdapter
           if property_dialog.close_action == "ok"
             name = property_dialog.get_name_field.get_text
             if name.empty? || name.nil?
-              name = "untitled"
+              name = ""
             end
             definition =  property_dialog.get_definition_area.get_text
             if definition.empty? || definition.nil?
@@ -314,20 +315,14 @@ class SelectAction < MouseAdapter
                 target_type = "11"
             end
 
-
             parent.add_connection @@pressed_source, source, source_point, target_point, source_type, target_type, name, definition
           end
         else
           parent.add_connection @@pressed_source, source, source_point, target_point, "0m", "0m", "untitled", "none"
         end
 
-
-
-        #puts "Added connection " + wtf.class.to_s
-
         border = BorderFactory.create_line_border Color::black
         source.set_border border
-        #@@pressed_source.set_border border
         pressed_entity.set_border border
         @@pressed_source = nil
         parent.panel.repaint
@@ -336,19 +331,21 @@ class SelectAction < MouseAdapter
 
   end
 
-  #Returns selected option from radio button group
+  # Returns selected option from radio button group
   def return_selected options
     options.each do |option|
       return option if option.is_selected
     end
   end
 
+  # Enables all disabled buttons in given button group
   def enable_buttons radio_group
     radio_group.get_elements.each do |button|
       button.set_enabled true
     end
   end
 
+  # Disables all buttons besides specified one in given button group
   def disable_buttons radio_group, leave_enabled
     radio_group.get_elements.each do |button|
       button.set_enabled false unless button.get_text == leave_enabled

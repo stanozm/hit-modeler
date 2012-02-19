@@ -6,14 +6,18 @@ import java.awt.geom.Line2D
 import java.awt.geom.Ellipse2D
 import java.lang.Math
 import java.awt.geom.Point2D
-
+# Author::    Stanislav Chren (mailto:stanislavch@gmail.com)
+# Copyright:: Copyright (c) 2012
+# License::   GPL-3.0
+#
+# This class represents endpoint of the connection.
 class Endpoint < JLabel
 
   attr_accessor :type,          #  "0m", "1m", "01", "11"
                 :direction,     #  "up", "down", "right", "left"
                 :entity_parent,
                 :connection,
-                :offset
+                :offset         # relative position to the parent, based on direction
 
 
 
@@ -169,6 +173,7 @@ class Endpoint < JLabel
 
   end
 
+  # Computes and sets new position based on current values of parent position, direction and offset
   def reset_position
     parent_x = @entity_parent.get_x
     parent_y = @entity_parent.get_y

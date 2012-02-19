@@ -1,16 +1,7 @@
 include Java
 
-require 'components/entity.rb'
-require 'components/entity_dialog.rb'
-require 'components/connection_dialog.rb'
-require 'components/endpoint.rb'
-require 'components/editor_panel.rb'
-require 'components/connection.rb'
-require 'actions/select_action.rb'
-require 'actions/delete_action.rb'
-require 'actions/panel_mouse_action.rb'
-require 'actions/move_action.rb'
-require 'actions/endpoint_mouse_action.rb'
+Dir[File.dirname(__FILE__) + '/components/*.rb'].each {|file| require file }
+Dir[File.dirname(__FILE__) + '/actions/*.rb'].each {|file| require file }
 
 require 'erb'
 
@@ -53,11 +44,29 @@ import java.awt.image.BufferedImage
 import javax.imageio.ImageIO
 import java.awt.Rectangle
 java_import 'ComponentMover'
-
 puts $CLASSPATH
+
+# HIT-Modeler is graphical editor for creating and management of conceptual data models according to HIT
+# methodology. Modeler class represent the main application window and its typical usage looks like:
+# * app = Modeler.new
+# * app.set_visible true
+# However, its basic functionality, such as adding components, import/export can be still used without making
+# the window visible
+# Warning: Make sure that all files from '/src/jars/' directory are on the classpath
+#
+# Author::    Stanislav Chren (mailto:stanislavch@gmail.com)
+# Copyright:: Copyright (c) 2012
+# License::   GPL-3.0
 class Modeler < JFrame
 
-  attr_accessor :draw_type, :entities, :connections, :focus, :entity_dialog, :connection_dialog, :panel, :max_id
+  attr_accessor :draw_type,         # currently selected mode - "pointer/kernel/associative/descriptive/connection"
+                :entities,          # collection of model's entities
+                :connections,       # collection of mddel's connections
+                :focus,             # currently selected entity/connection
+                :entity_dialog,     # dialog for displaying entity's properties
+                :connection_dialog, # dialog for displaying connection's properties
+                :panel,             # panel, which model is drawn in
+                :max_id             # last assigned id for entity
 
   MODEL_WIDTH = 1024
   MODEL_HEIGHT = 768
@@ -65,9 +74,7 @@ class Modeler < JFrame
   ENTITY_HEIGHT = 60
   ENDPOINT_WIDTH = 16
   ENDPOINT_HEIGHT = 16
-  PATH_TO_TEMPLATE = "resources/templates/model.html.erb"
-
-
+  PATH_TO_TEMPLATE = File.expand_path("resources/templates/model.html.erb", File.dirname(__FILE__))
 
   def initialize
     super "HIT Modeler"
@@ -80,31 +87,29 @@ class Modeler < JFrame
     self.init_ui
   end
 
+  # Setups application
   def init_ui
-    #Actions setup
-    init_actions
+    #Actions and listeners setup
+    self.init_actions
 
     #Menu setup
-    init_menu
+    self.init_menu
 
     #Toolbar setup
-    init_toolbar
+    self.init_toolbar
 
     #Panel setup
-    init_panel
+    self.init_panel
 
     #Dialogs setup
-    init_dialogs
+    self.init_dialogs
 
     #Frame setup
-    init_frame
+    self.init_frame
   end
-    #-----------------------------------------------------------
 
-    #Model management
-    #Creates new entity with given parameters, which is then added to panel and made movable
+    # Creates entity and adds it to the model. Additionally, it registers all necessary listeners.
     def add_entity(name, type, definition, x, y)
-
       entity = Entity.new
       entity.type = type
       entity.definition = definition
@@ -116,28 +121,27 @@ class Modeler < JFrame
         entity.name = name
       end
 
-      #TODO width a height budu konstanty
       entity.set_bounds x, y, ENTITY_WIDTH, ENTITY_HEIGHT
       @panel.add entity
 
-      #entity.add_mouse_listener SelectAction.new
       entity.add_mouse_listener @select_action
       entity.add_component_listener @move_action
       @entities << entity
       @cm.register_component entity
 
       @panel.repaint
-      #entity.set_opaque true
       entity
     end
 
-    def add_endpoint(type, entity, initX, initY)
+    # Adds endpoint to the given entity. Initial position is recomputed based on position of the entity
+    # and input position. Listeners are registered as well in order to make endpoint selectable and movable
+    def add_endpoint(type, entity, init_x, init_y)
       ep = Endpoint.new
       ep.type = type
       ep.entity_parent = entity
       entity.endpoints << ep
 
-      ep.set_bounds initX, initY, ENDPOINT_WIDTH, ENDPOINT_HEIGHT
+      ep.set_bounds init_x, init_y, ENDPOINT_WIDTH, ENDPOINT_HEIGHT
 
       ep.reset_direction
       ep.reset_position
@@ -154,13 +158,15 @@ class Modeler < JFrame
       return ep
     end
 
+    # Creates connection and adds it to the model. It should be used when connection is created by dragging mouse from
+    # source entity to target entity. Source point and target point are points located inside of the entities bounds
+    # and are used for computing initial position of the endpoints. It works as follows:
+    # * line object is constructed between interior points of source and target entities
+    # * for both entities is determined, which side of the entity is intersected by this line
+    # * points of intersection are computed
+    # * these points are used as initial positions of the endpoints
+    # Label with connection's name is created as well and is made movable
     def add_connection(source, target, source_point, target_point, s_type, t_type, name, definition)
-      source_x = source.get_x
-      source_y = source.get_y
-
-      target_x = target.get_x
-      target_y = target.get_y
-
 
       line = Line2D::Double.new  source_point, target_point
 
@@ -198,12 +204,9 @@ class Modeler < JFrame
       connection
     end
 
+    # Similar to add_connection method. Only difference is, that given points are the actual initial positions of
+    # endpoints. No further computation is used.
     def add_connection_specific_endpoints(source, target, source_point, target_point, s_type, t_type, name, definition)
-      ource_x = source.get_x
-      source_y = source.get_y
-
-      target_x = target.get_x
-      target_y = target.get_y
 
       sEP = add_endpoint s_type, source, source_point.get_x, source_point.get_y
       tEP = add_endpoint t_type, target, target_point.get_x, target_point.get_y
@@ -216,7 +219,6 @@ class Modeler < JFrame
       @panel.add label
       @cm.register_component label
 
-
       label.set_size label.get_preferred_size
       connection.label = label
       connection.reset_label_position
@@ -225,6 +227,7 @@ class Modeler < JFrame
       connection
     end
 
+    # Returns edge of the entity which is intersected by given line. Edge is returned as Line2D object
     def get_intersecting_line entity, connnectLine
       entity_x = entity.get_x
       entity_y = entity.get_y
@@ -246,6 +249,7 @@ class Modeler < JFrame
 
     end
 
+    # Returns Point2D object representing intersection point of the 2 lines. Lines are given by their endpoints
     def get_intersection_point point_a, point_b, point_c, point_d
       x_a, y_a = point_a.get_x, point_a.get_y
       x_b, y_b = point_b.get_x, point_b.get_y
@@ -255,23 +259,24 @@ class Modeler < JFrame
       inter_x = x_c + (((((y_c-y_a)*(x_b-x_a)) - ((x_c-x_a)*(y_b-y_a))) / (((x_d-x_c)*(y_b-y_a)) - ((y_d-y_c)*(x_b-x_a)))) * (x_d-x_c))
       inter_y = y_c + (((((y_c-y_a)*(x_b-x_a)) - ((x_c-x_a)*(y_b-y_a))) / (((x_d-x_c)*(y_b-y_a)) - ((y_d-y_c)*(x_b-x_a)))) * (y_d-y_c))
 
-
       return Point2D::Double.new inter_x, inter_y
-
     end
 
+    # Returns entity with given id
     def get_entity id
       @entities.each do |e|
         return e if e.id == id
       end
     end
 
+    # Clears whole content of the model
     def clear_model
       @panel.remove_all
       @connections.clear
       @entities.clear
     end
 
+    # Saves model into specified xml file
     def save_model file
       doc = Document.new
       doc << XMLDecl.new
@@ -368,12 +373,13 @@ class Modeler < JFrame
 
       output_file = File.open file, 'w'
       formatter = Formatters::Pretty.new(2)
-      formatter.compact = true # This is the magic line that does what you need!
+      formatter.compact = true
       formatter.write(doc, output_file)
       output_file.close
 
     end
 
+    # Loads model from given xml file. For details of the file structure, see save_model method
     def load_model file
       self.clear_model
 
@@ -395,9 +401,7 @@ class Modeler < JFrame
 
         ent = self.add_entity name, type, definition, x, y
         ent.id = id
-        puts ent.id
-       # @panel.repaint
-      end
+    end
 
       doc.elements.each("model/connections/connection") do |element|
         name = element.elements[1].text
@@ -428,11 +432,12 @@ class Modeler < JFrame
                                                      definition
 
         con.label.set_location label_x, label_y
-        #@panel.repaint
       end
       @panel.repaint
     end
 
+    # Exports model to given jpg file. First, it takes snapshot of the whole panel, then it is cropped, so
+    # that it contains only the actual model
     def export_to_jpg file
       width = @panel.get_width
       height = @panel.get_height
@@ -453,6 +458,10 @@ class Modeler < JFrame
 
     end
 
+    # Returns minimal bounding rectangle of the model.
+    # TODO: at this momemnt only entities are considered (+ additional space in case of endpoints is added).
+    #       This should be reworked into more general approach, where all components are considered,
+    #       including connection labels
     def get_bounding_rectangle
       leftmost_x = @panel.get_width
       rightmost_x = 0
@@ -478,10 +487,36 @@ class Modeler < JFrame
         if e_y + ENTITY_HEIGHT > bottom_y
           bottom_y = e_y + ENTITY_HEIGHT
         end
+
+        if leftmost_x - 17 > 0
+          leftmost_x = leftmost_x -17
+        else
+          leftmost_x = 0
+        end
+
+        if rightmost_x + 17 < @panel.get_width
+          rightmost_x = rightmost_x +17
+        else
+          rightmost_x = @panel.get_width
+        end
+
+        if top_y - 17 > 0
+          top_y = top_y -17
+        else
+          top_y = 0
+        end
+
+        if bottom_y + 17 < @panel.get_height
+          bottom_y = bottom_y + 17
+        else
+          bottom_y = @panel.get_height
+        end
+
       end
       return Rectangle.new leftmost_x, top_y, rightmost_x - leftmost_x, bottom_y - top_y
     end
 
+    # Exports model with given ERB template to given file
     def export_to_template template, file
       renderer = ERB.new(File.read(template))
       output = renderer.result binding
@@ -490,7 +525,8 @@ class Modeler < JFrame
       output_file.close
     end
 
-  private
+    # Setups application menu. All items should have assigned icons, mnemonics and accelerators. Default icon location
+    # is in 'resources/icons' directory
     def init_menu
       @menubar = JMenuBar.new
 
@@ -503,7 +539,8 @@ class Modeler < JFrame
       @help_menu = JMenu.new "Help"
       @help_menu.set_mnemonic KeyEvent::VK_H
 
-      @item_new = JMenuItem.new "New", (ImageIcon.new "resources/icons/new.png")
+      icon_path = File.expand_path("resources/icons/new.png", File.dirname(__FILE__))
+      @item_new = JMenuItem.new "New", (ImageIcon.new icon_path)
       @item_new.set_mnemonic KeyEvent::VK_N
       @item_new.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_N, ActionEvent::CTRL_MASK)
       @item_new.add_action_listener do |e|
@@ -511,7 +548,8 @@ class Modeler < JFrame
         @panel.repaint
       end
 
-      @item_save = JMenuItem.new "Save", (ImageIcon.new "resources/icons/Save16.gif")
+      icon_path = File.expand_path("resources/icons/Save16.gif", File.dirname(__FILE__))
+      @item_save = JMenuItem.new "Save", (ImageIcon.new icon_path)
       @item_save.set_mnemonic KeyEvent::VK_S
       @item_save.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_S, ActionEvent::CTRL_MASK)
       @item_save.add_action_listener do |e|
@@ -532,7 +570,9 @@ class Modeler < JFrame
           JOptionPane.show_message_dialog self, "Model has been saved.", "Save file", JOptionPane::INFORMATION_MESSAGE
         end
       end
-      @item_load = JMenuItem.new "Load", (ImageIcon.new "resources/icons/open.png")
+
+      icon_path = File.expand_path("resources/icons/open.png", File.dirname(__FILE__))
+      @item_load = JMenuItem.new "Load", (ImageIcon.new icon_path)
       @item_load.set_mnemonic KeyEvent::VK_L
       @item_load.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_L, ActionEvent::CTRL_MASK)
       @item_load.add_action_listener do |e|
@@ -552,15 +592,16 @@ class Modeler < JFrame
         end
       end
 
-      @item_exit = JMenuItem.new "Exit", (ImageIcon.new "resources/icons/exit.png")
+      icon_path = File.expand_path("resources/icons/exit.png", File.dirname(__FILE__))
+      @item_exit = JMenuItem.new "Exit", (ImageIcon.new icon_path)
       @item_exit.set_mnemonic KeyEvent::VK_E
       @item_exit.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_X, ActionEvent::CTRL_MASK)
       @item_exit.add_action_listener do |e|
         System.exit 0
       end
 
-
-      @item_export_to_jpg = JMenuItem.new "Export to JPG", (ImageIcon.new "resources/icons/image.png")
+      icon_path = File.expand_path("resources/icons/image.png", File.dirname(__FILE__))
+      @item_export_to_jpg = JMenuItem.new "Export to JPG", (ImageIcon.new icon_path)
       @item_export_to_jpg.set_mnemonic KeyEvent::VK_J
       @item_export_to_jpg.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_J, ActionEvent::CTRL_MASK)
       @item_export_to_jpg.add_action_listener do |e|
@@ -579,8 +620,8 @@ class Modeler < JFrame
         end
       end
 
-
-      @item_export_to_html = JMenuItem.new "Export to HTML", (ImageIcon.new "resources/icons/html.png")
+      icon_path = File.expand_path("resources/icons/html.png", File.dirname(__FILE__))
+      @item_export_to_html = JMenuItem.new "Export to HTML", (ImageIcon.new icon_path)
       @item_export_to_html.set_mnemonic KeyEvent::VK_H
       @item_export_to_html.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_H, ActionEvent::CTRL_MASK)
       @item_export_to_html.add_action_listener do |e|
@@ -599,9 +640,13 @@ class Modeler < JFrame
         end
       end
 
-      @item_about = JMenuItem.new "About", (ImageIcon.new "resources/icons/Information16.gif")
+      icon_path = File.expand_path("resources/icons/Information16.gif", File.dirname(__FILE__))
+      @item_about = JMenuItem.new "About", (ImageIcon.new icon_path)
       @item_about.set_mnemonic KeyEvent::VK_A
       @item_about.set_accelerator KeyStroke.get_key_stroke("F1")
+      @item_about.add_action_listener do |e|
+        JOptionPane.show_message_dialog self, "HIT-Modeler v0.5\nAuthor: Stanislav Chren\n2012", "About", JOptionPane::PLAIN_MESSAGE
+      end
 
 
       [@item_new,
@@ -620,28 +665,34 @@ class Modeler < JFrame
       self.set_jmenu_bar @menubar
     end
 
+    # Setups toolbar
     def init_toolbar
       @toolbar = JToolBar.new
       @toolbar.set_rollover true
 
       #Toolbar buttons
-      @pointer_button = JToggleButton.new ImageIcon.new "resources/icons/pointer.png"
+      icon_path = File.expand_path("resources/icons/pointer.png", File.dirname(__FILE__))
+      @pointer_button = JToggleButton.new ImageIcon.new icon_path
       @pointer_button.set_action_command "pointer"
       @pointer_button.set_tool_tip_text "Select tool"
 
-      @kernel_button = JToggleButton.new ImageIcon.new "resources/icons/kernel.png"
+      icon_path = File.expand_path("resources/icons/kernel.png", File.dirname(__FILE__))
+      @kernel_button = JToggleButton.new ImageIcon.new icon_path
       @kernel_button.set_action_command "kernel"
       @kernel_button.set_tool_tip_text "Create kernel entity"
 
-      @assoc_button = JToggleButton.new ImageIcon.new "resources/icons/associative.png"
+      icon_path = File.expand_path("resources/icons/associative.png", File.dirname(__FILE__))
+      @assoc_button = JToggleButton.new ImageIcon.new icon_path
       @assoc_button.set_action_command "associative"
       @assoc_button.set_tool_tip_text "Create associative entity"
 
-      @desc_button = JToggleButton.new ImageIcon.new "resources/icons/descriptive.png"
+      icon_path = File.expand_path("resources/icons/descriptive.png", File.dirname(__FILE__))
+      @desc_button = JToggleButton.new ImageIcon.new icon_path
       @desc_button.set_action_command "descriptive"
       @desc_button.set_tool_tip_text "Create characteristic entity"
 
-      @connect_button = JToggleButton.new ImageIcon.new "resources/icons/connection.png"
+      icon_path = File.expand_path("resources/icons/connection.png", File.dirname(__FILE__))
+      @connect_button = JToggleButton.new ImageIcon.new icon_path
       @connect_button.set_action_command "connection"
       @connect_button.set_tool_tip_text "Create connection"
 
@@ -658,7 +709,6 @@ class Modeler < JFrame
       @draw_type = "pointer"
 
       #Adding button into toolbar
-      #TODO replace text with icons
       @toolbar.add @pointer_button
       @toolbar.add_separator
       [@kernel_button,
@@ -667,8 +717,8 @@ class Modeler < JFrame
       @toolbar.add_separator
       @toolbar.add @connect_button
 
-      #Sets draw_type after switching button selection
-      #and enables/disables dragging
+      # Sets draw_type after switching button selection
+      # and enables/disables dragging
       [@pointer_button,
        @kernel_button,
        @assoc_button,
@@ -685,14 +735,13 @@ class Modeler < JFrame
         end
       }
 
-      #Adding toolbar to frame
+      # Adding toolbar to frame
       self.add @toolbar, BorderLayout::NORTH
     end
 
     def init_panel
       @panel = EditorPanel.new
       @panel.parent_frame = self
-      puts @panel.parent_frame.class.to_s
       @panel.set_layout nil
       @panel.set_background Color.new 255, 255, 255
       @panel.set_preferred_size Dimension.new 1024, 1024
@@ -714,6 +763,7 @@ class Modeler < JFrame
 
     end
 
+    # Setups custom dialogs used by application
     def init_dialogs
       @entity_dialog = EntityDialog.new self, true
       @entity_dialog.set_visible false
@@ -722,6 +772,7 @@ class Modeler < JFrame
       @connection_dialog.set_visible false
     end
 
+    # Setups main frame
     def init_frame
       self.set_default_close_operation JFrame::EXIT_ON_CLOSE
       self.set_size MODEL_WIDTH, MODEL_HEIGHT
@@ -729,6 +780,7 @@ class Modeler < JFrame
       self.set_visible false
     end
 
+    # Setups main listener objects
     def init_actions
       @select_action = SelectAction.new
       @endpoint_mouse_action = EndpointMouseAction.new
@@ -736,7 +788,3 @@ class Modeler < JFrame
     end
 
 end
-
-
-modeler = Modeler.new
-modeler.set_visible true
