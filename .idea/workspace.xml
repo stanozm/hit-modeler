@@ -2,40 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2b57fa55-61c1-4ae9-ad15-4b2fa89678e3" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/.name" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/ant.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/compiler.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/copyright/profiles_settings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/encodings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/libraries/ComponentMover.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/libraries/EDialog.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/modules.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/uiDesigner.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/vcs.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/application.rb" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/test/modeler_spec.rb" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/ComponentMover.class" afterPath="" />
-      <change type="DELETED" beforePath="$PROJECT_DIR$/src/ComponentMover.jar" afterPath="" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/ComponentMover.jar" afterPath="$PROJECT_DIR$/jars/ComponentMover.jar" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/CDialog.jar" afterPath="$PROJECT_DIR$/jars/CDialog.jar" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/src/EDialog.jar" afterPath="$PROJECT_DIR$/jars/EDialog.jar" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/libraries/CDialog.xml" afterPath="$PROJECT_DIR$/.idea/libraries/CDialog.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/hit-modeler.iml" afterPath="$PROJECT_DIR$/hit-modeler.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/actions/delete_action.rb" afterPath="$PROJECT_DIR$/src/actions/delete_action.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/actions/endpoint_mouse_action.rb" afterPath="$PROJECT_DIR$/src/actions/endpoint_mouse_action.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/actions/move_action.rb" afterPath="$PROJECT_DIR$/src/actions/move_action.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/actions/panel_mouse_action.rb" afterPath="$PROJECT_DIR$/src/actions/panel_mouse_action.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/actions/select_action.rb" afterPath="$PROJECT_DIR$/src/actions/select_action.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/components/connection.rb" afterPath="$PROJECT_DIR$/src/components/connection.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/components/connection_dialog.rb" afterPath="$PROJECT_DIR$/src/components/connection_dialog.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/components/editor_panel.rb" afterPath="$PROJECT_DIR$/src/components/editor_panel.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/components/endpoint.rb" afterPath="$PROJECT_DIR$/src/components/endpoint.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/components/entity.rb" afterPath="$PROJECT_DIR$/src/components/entity.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/components/entity_dialog.rb" afterPath="$PROJECT_DIR$/src/components/entity_dialog.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/modeler.rb" afterPath="$PROJECT_DIR$/src/modeler.rb" />
+      <change type="MOVED" beforePath="$PROJECT_DIR$/application.rb" afterPath="$PROJECT_DIR$/bin/application.rb" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="hit-modeler.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -98,19 +66,19 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="modeler_spec.rb" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="modeler_spec.rb" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/test/modeler_spec.rb">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="10" column="64" selection-start="321" selection-end="321" vertical-scroll-proportion="-3.251152">
+            <state line="2" column="78" selection-start="35" selection-end="35" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="application.rb" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/application.rb">
+      <file leaf-file-name="application.rb" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/bin/application.rb">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="1" column="0" selection-start="54" selection-end="54" vertical-scroll-proportion="0.0">
+            <state line="4" column="53" selection-start="194" selection-end="194" vertical-scroll-proportion="0.13824885">
               <folding />
             </state>
           </provider>
@@ -158,7 +126,6 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/src/endpoint_mouse_action.rb" />
         <option value="$PROJECT_DIR$/src/resources/templates/model.html.erb" />
         <option value="$PROJECT_DIR$/test/modeler_spec.rb" />
         <option value="$PROJECT_DIR$/src/modeler.rb" />
@@ -174,6 +141,7 @@
         <option value="$PROJECT_DIR$/src/components/connection_dialog.rb" />
         <option value="$PROJECT_DIR$/application.rb" />
         <option value="$PROJECT_DIR$/src/components/endpoint.rb" />
+        <option value="$PROJECT_DIR$/bin/application.rb" />
       </list>
     </option>
   </component>
@@ -390,6 +358,20 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="hit-modeler" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="hit-modeler" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="bin" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
@@ -433,7 +415,7 @@
       <recent name="$PROJECT_DIR$/src/actions" />
     </key>
   </component>
-  <component name="RunManager" selected="RSpec.modeler_spec">
+  <component name="RunManager" selected="Ruby.application">
     <configuration default="false" name="application" type="RubyRunConfigurationType" factoryName="Ruby" temporary="true">
       <module name="hit-modeler" />
       <RUBY_RUN_CONFIG NAME="RUBY_ARGS" VALUE="-e $stdout.sync=true;$stderr.sync=true;load($0=ARGV.shift)" />
@@ -448,7 +430,7 @@
           <PATTERN REGEXPS="/.rvm/" INCLUDED="false" />
         </COVERAGE_PATTERN>
       </EXTENSION>
-      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$PROJECT_DIR$/application.rb" />
+      <RUBY_RUN_CONFIG NAME="SCRIPT_PATH" VALUE="$PROJECT_DIR$/bin/application.rb" />
       <RUBY_RUN_CONFIG NAME="SCRIPT_ARGS" VALUE="" />
       <RunnerSettings RunnerId="Run" />
       <ConfigurationWrapper RunnerId="Run" />
@@ -882,7 +864,7 @@
       <window_info id="Maven Projects" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32954547" sideWeight="0.7590759" order="6" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.39935064" sideWeight="0.7590759" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.2711039" sideWeight="0.7590759" order="0" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24092409" sideWeight="0.4935065" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.24092409" sideWeight="0.4935065" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
@@ -923,7 +905,7 @@
     <option name="INCLUDE_TEXT_INTO_SHELF" value="false" />
     <option name="CREATE_PATCH_EXPAND_DETAILS_DEFAULT" value="true" />
     <option name="FORCE_NON_EMPTY_COMMENT" value="false" />
-    <option name="LAST_COMMIT_MESSAGE" value="Added export to html&#10;Added icons, shortcuts&#10;Implemented deselection&#10;Frame setup refactoring" />
+    <option name="LAST_COMMIT_MESSAGE" value="Removed duplicit files" />
     <option name="MAKE_NEW_CHANGELIST_ACTIVE" value="true" />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="false" />
     <option name="CHECK_FILES_UP_TO_DATE_BEFORE_COMMIT" value="false" />
@@ -943,6 +925,8 @@
     <MESSAGE value="Added save model to xml feature&#10;Extended menu" />
     <MESSAGE value="Added xml import/export support&#10;Added export to JPG" />
     <MESSAGE value="Added export to html&#10;Added icons, shortcuts&#10;Implemented deselection&#10;Frame setup refactoring" />
+    <MESSAGE value="Implemented modeler tests&#10;Refactoring paths of resources and dependencies&#10;Code clean-up&#10;Added more detailed documentation&#10;Added execution script" />
+    <MESSAGE value="Removed duplicit files" />
   </component>
   <component name="VssConfiguration">
     <option name="CLIENT_PATH" value="" />
@@ -1084,16 +1068,16 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/application.rb">
+    <entry file="file://$PROJECT_DIR$/test/modeler_spec.rb">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1" column="0" selection-start="54" selection-end="54" vertical-scroll-proportion="0.0">
+        <state line="2" column="78" selection-start="35" selection-end="35" vertical-scroll-proportion="0.0">
           <folding />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/test/modeler_spec.rb">
+    <entry file="file://$PROJECT_DIR$/bin/application.rb">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="10" column="64" selection-start="321" selection-end="321" vertical-scroll-proportion="-3.251152">
+        <state line="4" column="53" selection-start="194" selection-end="194" vertical-scroll-proportion="0.13824885">
           <folding />
         </state>
       </provider>
