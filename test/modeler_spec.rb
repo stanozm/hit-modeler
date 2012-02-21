@@ -114,10 +114,10 @@ describe Modeler do
 
   it "should return proper bounding rectangle of the model" do
     rec = @modeler.get_bounding_rectangle
-    rec.get_x.should == 66
-    rec.get_y.should == 66
-    rec.get_width.should == 361
-    rec.get_height.should == 311
+    rec.get_x.should == 100
+    rec.get_y.should == 100
+    rec.get_width.should == 310
+    rec.get_height.should == 260
   end
 
   after do

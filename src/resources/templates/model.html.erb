@@ -8,7 +8,9 @@
 <h1>Connections</h1>
 <ul>
     <% @connections.each do |con| %>
-        <li><a href="#<%= con.name %>"><%= con.name %></a></li>
+        <% unless con.name.nil? %>
+            <li><a href="#<%= con.name %>"><%= con.name %></a></li>
+        <% end %>
     <% end %>
 </ul>
 
@@ -23,9 +25,11 @@
 </br>
 <h2>Connections definition</h2>
 <% @connections.each do |con| %>
+    <% unless con.name.nil? %>
     <p>
         <a name="<%= con.name %>"></a><b>Ref:</b> <%= con.name %> </br>
         <%= con.definition %>
     </p>
+    <% end %>
 <% end %>
 </html>

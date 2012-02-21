@@ -488,29 +488,29 @@ class Modeler < JFrame
           bottom_y = e_y + ENTITY_HEIGHT
         end
 
-        if leftmost_x - 17 > 0
-          leftmost_x = leftmost_x -17
-        else
-          leftmost_x = 0
-        end
+        #if leftmost_x - 17 > 0
+        #  leftmost_x = leftmost_x -17
+        #else
+        #  leftmost_x = 0
+        #end
 
-        if rightmost_x + 17 < @panel.get_width
-          rightmost_x = rightmost_x +17
-        else
-          rightmost_x = @panel.get_width
-        end
+        #if rightmost_x + 17 < @panel.get_width
+        #  rightmost_x = rightmost_x +17
+        #else
+        #  rightmost_x = @panel.get_width
+        #end
 
-        if top_y - 17 > 0
-          top_y = top_y -17
-        else
-          top_y = 0
-        end
+        #if top_y - 17 > 0
+        #  top_y = top_y -17
+        #else
+        #  top_y = 0
+        #end
 
-        if bottom_y + 17 < @panel.get_height
-          bottom_y = bottom_y + 17
-        else
-          bottom_y = @panel.get_height
-        end
+        #if bottom_y + 17 < @panel.get_height
+        #  bottom_y = bottom_y + 17
+        #else
+        #  bottom_y = @panel.get_height
+        #end
 
       end
       return Rectangle.new leftmost_x, top_y, rightmost_x - leftmost_x, bottom_y - top_y
