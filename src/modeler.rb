@@ -77,17 +77,23 @@ class Modeler < JFrame
   ENDPOINT_HEIGHT = 16
   PATH_TO_TEMPLATE = File.expand_path("resources/templates/model.html.erb", File.dirname(__FILE__))
   DEFAULT_FILE_NAME = "<new model>"
+  APP_NAME = "HIT Modeler"
 
   def initialize
-    super "HIT Modeler"
+    super APP_NAME
 
     @entities = []
     @connections = []
     @cm = ComponentMover.new
     @max_id = 0
-    @current_file = DEFAULT_FILE_NAME
 
+    self.update_current_file DEFAULT_FILE_NAME
     self.init_ui
+  end
+
+  def update_current_file file
+    @current_file = file
+    self.setTitle APP_NAME + " - " + @current_file
   end
 
   # Setups application
@@ -544,7 +550,7 @@ class Modeler < JFrame
       ret = file_chooser.showDialog self, "Save"
     
       if ret == JFileChooser::APPROVE_OPTION
-        @current_file = file_chooser.getSelectedFile.absolute_path
+        self.update_current_file file_chooser.getSelectedFile.absolute_path
     
         self.save_model @current_file
         JOptionPane.show_message_dialog self, "Model has been saved to #{@current_file}.", "Save file", JOptionPane::INFORMATION_MESSAGE
@@ -570,7 +576,7 @@ class Modeler < JFrame
       @item_new.set_mnemonic KeyEvent::VK_N
       @item_new.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_N, ActionEvent::CTRL_MASK)
       @item_new.add_action_listener do |e|
-        @current_file = DEFAULT_FILE_NAME
+        self.update_current_file DEFAULT_FILE_NAME
         self.clear_model
         @panel.repaint
       end
@@ -612,7 +618,7 @@ class Modeler < JFrame
           self.set_cursor(Cursor.get_predefined_cursor(Cursor::WAIT_CURSOR))
           self.load_model file
           self.set_cursor nil
-          @current_file = file
+          self.update_current_file file
         end
       end
 
