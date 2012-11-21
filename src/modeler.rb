@@ -111,6 +111,7 @@ class Modeler < JFrame
     # Creates entity and adds it to the model. Additionally, it registers all necessary listeners.
     def add_entity(name, type, definition, x, y)
       entity = Entity.new
+      entity.id = get_next_free_entity_id
       entity.type = type
       entity.definition = definition
       entity.set_tool_tip_text definition
@@ -260,6 +261,11 @@ class Modeler < JFrame
       inter_y = y_c + (((((y_c-y_a)*(x_b-x_a)) - ((x_c-x_a)*(y_b-y_a))) / (((x_d-x_c)*(y_b-y_a)) - ((y_d-y_c)*(x_b-x_a)))) * (y_d-y_c))
 
       return Point2D::Double.new inter_x, inter_y
+    end
+
+    def get_next_free_entity_id
+      # TODO: make thread-safe!
+      return @max_id += 1
     end
 
     # Returns entity with given id
