@@ -66,7 +66,8 @@ class Modeler < JFrame
                 :entity_dialog,     # dialog for displaying entity's properties
                 :connection_dialog, # dialog for displaying connection's properties
                 :panel,             # panel, which model is drawn in
-                :max_id             # last assigned id for entity
+                :max_id,            # last assigned id for entity
+                :current_file       # current open model file name
 
   MODEL_WIDTH = 1024
   MODEL_HEIGHT = 768
@@ -75,6 +76,7 @@ class Modeler < JFrame
   ENDPOINT_WIDTH = 16
   ENDPOINT_HEIGHT = 16
   PATH_TO_TEMPLATE = File.expand_path("resources/templates/model.html.erb", File.dirname(__FILE__))
+  DEFAULT_FILE_NAME = "<new model>"
 
   def initialize
     super "HIT Modeler"
@@ -83,6 +85,7 @@ class Modeler < JFrame
     @connections = []
     @cm = ComponentMover.new
     @max_id = 0
+    @current_file = DEFAULT_FILE_NAME
 
     self.init_ui
   end
@@ -530,6 +533,24 @@ class Modeler < JFrame
       output_file.close
     end
 
+  def perform_save_as_action
+      file_chooser = JFileChooser.new
+    
+      filter = FileNameExtensionFilter.new "xml files", "xml"
+    
+      file_chooser.set_accept_all_file_filter_used false
+      file_chooser.addChoosableFileFilter filter
+    
+      ret = file_chooser.showDialog self, "Save"
+    
+      if ret == JFileChooser::APPROVE_OPTION
+        @current_file = file_chooser.getSelectedFile.absolute_path
+    
+        self.save_model @current_file
+        JOptionPane.show_message_dialog self, "Model has been saved to #{@current_file}.", "Save file", JOptionPane::INFORMATION_MESSAGE
+      end 
+  end
+
     # Setups application menu. All items should have assigned icons, mnemonics and accelerators. Default icon location
     # is in 'resources/icons' directory
     def init_menu
@@ -549,8 +570,15 @@ class Modeler < JFrame
       @item_new.set_mnemonic KeyEvent::VK_N
       @item_new.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_N, ActionEvent::CTRL_MASK)
       @item_new.add_action_listener do |e|
+        @current_file = DEFAULT_FILE_NAME
         self.clear_model
         @panel.repaint
+      end
+
+      icon_path = File.expand_path("resources/icons/Save16.gif", File.dirname(__FILE__))
+      @item_save_as = JMenuItem.new "Save As ...", (ImageIcon.new icon_path)
+      @item_save_as.add_action_listener do |e|
+        self.perform_save_as_action
       end
 
       icon_path = File.expand_path("resources/icons/Save16.gif", File.dirname(__FILE__))
@@ -558,21 +586,11 @@ class Modeler < JFrame
       @item_save.set_mnemonic KeyEvent::VK_S
       @item_save.set_accelerator KeyStroke.get_key_stroke(KeyEvent::VK_S, ActionEvent::CTRL_MASK)
       @item_save.add_action_listener do |e|
-        file_chooser = JFileChooser.new
-
-        filter = FileNameExtensionFilter.new "xml files", "xml"
-
-        file_chooser.set_accept_all_file_filter_used false
-        file_chooser.addChoosableFileFilter filter
-
-        ret = file_chooser.showDialog self, "Save"
-
-
-        if ret == JFileChooser::APPROVE_OPTION
-          file = file_chooser.getSelectedFile.absolute_path
-
-          self.save_model file
-          JOptionPane.show_message_dialog self, "Model has been saved.", "Save file", JOptionPane::INFORMATION_MESSAGE
+        if @current_file != DEFAULT_FILE_NAME
+          self.save_model @current_file
+          JOptionPane.show_message_dialog self, "Model has been saved to #{@current_file}.", "Save file", JOptionPane::INFORMATION_MESSAGE
+        else
+          self.perform_save_as_action
         end
       end
 
@@ -594,6 +612,7 @@ class Modeler < JFrame
           self.set_cursor(Cursor.get_predefined_cursor(Cursor::WAIT_CURSOR))
           self.load_model file
           self.set_cursor nil
+          @current_file = file
         end
       end
 
@@ -655,8 +674,9 @@ class Modeler < JFrame
 
 
       [@item_new,
-       @item_save,
        @item_load,
+       @item_save,
+       @item_save_as,
        @item_exit].each{ |c| @file_menu.add c}
 
       [@item_export_to_jpg,
