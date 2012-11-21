@@ -372,8 +372,7 @@ class Modeler < JFrame
       end
 
       output_file = File.open file, 'w'
-      formatter = Formatters::Pretty.new(2)
-      formatter.compact = true
+      formatter = Formatters::Default.new   # using Pretty formatter corrupts indentation in definitions
       formatter.write(doc, output_file)
       output_file.close
 
