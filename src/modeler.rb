@@ -78,6 +78,7 @@ class Modeler < JFrame
   ENTITY_HEIGHT = 60
   ENDPOINT_WIDTH = 16
   ENDPOINT_HEIGHT = 16
+  DEFAULT_SPLIT_PANE_HEIGHT = 200 
   PATH_TO_TEMPLATE = File.expand_path("resources/templates/model.html.erb", File.dirname(__FILE__))
   DEFAULT_FILE_NAME = "<new model>"
   APP_NAME = "HIT Modeler"
@@ -292,6 +293,7 @@ class Modeler < JFrame
       @panel.remove_all
       @connections.clear
       @entities.clear
+      self.clear_displayed_definition      
     end
 
     # Saves model into specified xml file
@@ -810,7 +812,7 @@ class Modeler < JFrame
       @split_pane = JSplitPane.new JSplitPane::VERTICAL_SPLIT,
                                  @scroll_pane, @def_scroll_pane
       @split_pane.set_one_touch_expandable true
-      @split_pane.set_divider_location MODEL_HEIGHT - 200
+      @split_pane.set_divider_location MODEL_HEIGHT - DEFAULT_SPLIT_PANE_HEIGHT
       
       #Provide minimum sizes for the two components in the split pane
       minimumSize = Dimension.new 100, 100
