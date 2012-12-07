@@ -15,7 +15,13 @@ import java.awt.BasicStroke
 # attribute of main window. It will either create enitiy of specified type or deselects any currently selected object
 class PanelMouseAction < MouseAdapter
 
+  def initialize modeler
+    super()
+    @modeler = modeler
+  end
+
   def mouseReleased e
+    @modeler.clear_displayed_definition        
 
     source = e.source
     x = e.getX

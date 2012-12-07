@@ -15,7 +15,9 @@ import javax.swing.ImageIcon
 import javax.swing.JButton
 import javax.swing.JMenuBar
 import javax.swing.JMenu
+import javax.swing.JSplitPane
 import javax.swing.JToolBar
+import javax.swing.JTextArea
 import javax.swing.JComponent
 import java.lang.System
 import java.awt.Color
@@ -66,6 +68,7 @@ class Modeler < JFrame
                 :entity_dialog,     # dialog for displaying entity's properties
                 :connection_dialog, # dialog for displaying connection's properties
                 :panel,             # panel, which model is drawn in
+                :def_panel,         # panel, which the current definition shows in
                 :max_id,            # last assigned id for entity
                 :current_file       # current open model file name
 
@@ -75,6 +78,7 @@ class Modeler < JFrame
   ENTITY_HEIGHT = 60
   ENDPOINT_WIDTH = 16
   ENDPOINT_HEIGHT = 16
+  DEFAULT_SPLIT_PANE_HEIGHT = 200 
   PATH_TO_TEMPLATE = File.expand_path("resources/templates/model.html.erb", File.dirname(__FILE__))
   DEFAULT_FILE_NAME = "<new model>"
   APP_NAME = "HIT Modeler"
@@ -289,6 +293,7 @@ class Modeler < JFrame
       @panel.remove_all
       @connections.clear
       @entities.clear
+      self.clear_displayed_definition      
     end
 
     # Saves model into specified xml file
@@ -770,9 +775,9 @@ class Modeler < JFrame
       self.add @toolbar, BorderLayout::NORTH
     end
 
-    def init_panel
+    def init_editor_panel parentFrame
       @panel = EditorPanel.new
-      @panel.parent_frame = self
+      @panel.parent_frame = parentFrame
       @panel.set_layout nil
       @panel.set_background Color.new 255, 255, 255
       @panel.set_preferred_size Dimension.new 1024, 1024
@@ -782,15 +787,42 @@ class Modeler < JFrame
       input_map = @panel.get_input_map JComponent::WHEN_IN_FOCUSED_WINDOW
       input_map.put stroke, "DELETE"
       @panel.get_action_map.put "DELETE", DeleteAction.new
-
-      #Adding scrollbars to JPanel
+ 
+      #Adding scroll pane
       @scroll_pane = JScrollPane.new @panel
       @scroll_pane.set_viewport_view @panel
       @scroll_pane.get_vertical_scroll_bar.set_unit_increment 10
-      self.get_content_pane.add @scroll_pane
+    end
+
+    def init_definition_panel
+      @def_panel = JTextArea.new ""
+      @def_panel.set_editable false
+
+      #Adding scroll pane
+      @def_scroll_pane = JScrollPane.new @def_panel
+      @def_scroll_pane.set_viewport_view @def_panel
+      @def_scroll_pane.get_vertical_scroll_bar.set_unit_increment 10
+    end
+  
+    def init_panel
+      init_editor_panel self
+      init_definition_panel
+      
+      #Adding split pane
+      @split_pane = JSplitPane.new JSplitPane::VERTICAL_SPLIT,
+                                 @scroll_pane, @def_scroll_pane
+      @split_pane.set_one_touch_expandable true
+      @split_pane.set_divider_location MODEL_HEIGHT - DEFAULT_SPLIT_PANE_HEIGHT
+      
+      #Provide minimum sizes for the two components in the split pane
+      minimumSize = Dimension.new 100, 100
+      @scroll_pane.set_minimum_size minimumSize
+      @def_scroll_pane.set_minimum_size minimumSize
+
+      self.get_content_pane.add @split_pane
 
       #Registering listener for adding new components
-      @panel.add_mouse_listener PanelMouseAction.new
+      @panel.add_mouse_listener PanelMouseAction.new self
 
     end
 
@@ -813,9 +845,17 @@ class Modeler < JFrame
 
     # Setups main listener objects
     def init_actions
-      @select_action = SelectAction.new
+      @select_action = SelectAction.new self
       @endpoint_mouse_action = EndpointMouseAction.new
       @move_action = MoveAction.new
     end
 
+    def display_definition definition
+      @def_panel.set_text definition
+    end
+
+    def clear_displayed_definition
+      @def_panel.set_text ""
+    end
+  
 end

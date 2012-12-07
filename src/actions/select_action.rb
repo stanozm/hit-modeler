@@ -27,9 +27,10 @@ class SelectAction < MouseAdapter
   # if set to false, default connection between entities is created, without displaying property dialog
   SHOW_CONNECTION_DIALOG = true
 
-  def initialize
+  def initialize modeler
+    super()
+    @modeler = modeler
     @@pressed_source = nil
-
   end
 
   def mouseClicked e
@@ -69,6 +70,7 @@ class SelectAction < MouseAdapter
         border = BorderFactory.create_line_border Color::blue, 2
         source.set_border border
         parent.focus = source
+        @modeler.display_definition source.definition
       end
 
       #Sets focus on connection of the currently selected endpoint
@@ -78,6 +80,7 @@ class SelectAction < MouseAdapter
         focus_connection.stroke = BasicStroke.new 2
         focus_connection.label.set_foreground Color::blue
         parent.focus = focus_connection
+        @modeler.display_definition focus_connection.definition
       end
 
       parent.panel.repaint
